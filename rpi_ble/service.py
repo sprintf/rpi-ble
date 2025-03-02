@@ -1,103 +1,170 @@
 
 from constants import SERVICE_UUID, CHAR_UUID
 
+import dbus
+import dbus.exceptions
+import dbus.mainloop.glib
+import dbus.service
+
+from gi.repository import GLib
+
+import array
 import sys
-import signal
-from bluepy.btle import Peripheral, DefaultDelegate, ADDR_TYPE_RANDOM
-from bluepy.btle import UUID, Service, Characteristic, Descriptor
-import struct
+
+mainloop = None
 
 FIXED_STRING = "123"
 
+BLUEZ_SERVICE_NAME = 'org.bluez'
+GATT_MANAGER_IFACE = 'org.bluez.GattManager1'
+DBUS_OM_IFACE = 'org.freedesktop.DBus.ObjectManager'
+DBUS_PROP_IFACE = 'org.freedesktop.DBus.Properties'
 
-class MyPeripheral(Peripheral):
-    def __init__(self):
-        Peripheral.__init__(self)
-        self.service = None
-        self.characteristic = None
-
-
-class MyDelegate(DefaultDelegate):
-    def __init__(self, peripheral):
-        DefaultDelegate.__init__(self)
-        self.peripheral = peripheral
-
-    def handleNotification(self, cHandle, data):
-        print(f"Notification from handle {cHandle}: {data}")
-
-    def handleDiscovery(self, dev, isNewDev, isNewData):
-        if isNewDev:
-            print(f"Discovered device {dev.addr}")
-        elif isNewData:
-            print(f"Received new data from {dev.addr}")
-
-    def handleRead(self, cHandle):
-        print(f"Read request for handle {cHandle}")
-        # For our fixed string characteristic
-        if self.peripheral.characteristic and cHandle == self.peripheral.characteristic.getHandle():
-            print(f"Returning fixed string: {FIXED_STRING}")
-            return FIXED_STRING.encode()
-        return None
+GATT_SERVICE_IFACE = 'org.bluez.GattService1'
+GATT_CHRC_IFACE = 'org.bluez.GattCharacteristic1'
 
 
-def register_service(peripheral):
-    """Register our service with BlueZ"""
+class Application(dbus.service.Object):
+    def __init__(self, bus):
+        self.path = '/'
+        self.services = []
+        dbus.service.Object.__init__(self, bus, self.path)
+        self.add_service(FixedStringService(bus, 0))
+
+    def get_path(self):
+        return dbus.ObjectPath(self.path)
+
+    def add_service(self, service):
+        self.services.append(service)
+
+    @dbus.service.method(DBUS_OM_IFACE, out_signature='a{oa{sa{sv}}}')
+    def GetManagedObjects(self):
+        response = {}
+        for service in self.services:
+            response[service.get_path()] = service.get_properties()
+            chrcs = service.get_characteristics()
+            for chrc in chrcs:
+                response[chrc.get_path()] = chrc.get_properties()
+        return response
+
+class FixedStringService(dbus.service.Object):
+    PATH_BASE = '/org/bluez/example/service'
+
+    def __init__(self, bus, index):
+        self.path = self.PATH_BASE + str(index)
+        self.bus = bus
+        self.uuid = SERVICE_UUID
+        self.primary = True
+        self.characteristics = []
+        dbus.service.Object.__init__(self, bus, self.path)
+        self.add_characteristic(FixedStringCharacteristic(bus, 0, self))
+
+    def get_properties(self):
+        return {
+            GATT_SERVICE_IFACE: {
+                'UUID': self.uuid,
+                'Primary': self.primary,
+                'Characteristics': dbus.Array(
+                    self.get_characteristic_paths(),
+                    signature='o')
+            }
+        }
+
+    def get_path(self):
+        return dbus.ObjectPath(self.path)
+
+    def add_characteristic(self, characteristic):
+        self.characteristics.append(characteristic)
+
+    def get_characteristic_paths(self):
+        result = []
+        for chrc in self.characteristics:
+            result.append(chrc.get_path())
+        return result
+
+    def get_characteristics(self):
+        return self.characteristics
+
+class FixedStringCharacteristic(dbus.service.Object):
+    PATH_BASE = '/org/bluez/example/characteristic'
+
+    def __init__(self, bus, index, service):
+        self.path = service.path + '/char' + str(index)
+        self.bus = bus
+        self.uuid = CHAR_UUID
+        self.service = service
+        self.flags = ['read']
+        dbus.service.Object.__init__(self, bus, self.path)
+
+    def get_properties(self):
+        return {
+            GATT_CHRC_IFACE: {
+                'Service': self.service.get_path(),
+                'UUID': self.uuid,
+                'Flags': self.flags,
+            }
+        }
+
+    def get_path(self):
+        return dbus.ObjectPath(self.path)
+
+    @dbus.service.method(GATT_CHRC_IFACE, in_signature='a{sv}', out_signature='ay')
+    def ReadValue(self, options):
+        print(f'FixedStringCharacteristic ReadValue called, returning: {FIXED_STRING}')
+        # Convert the fixed string to a byte array
+        value = []
+        for c in FIXED_STRING:
+            value.append(dbus.Byte(ord(c)))
+        return value
+
+def register_app_cb():
+    print('GATT application registered')
+
+def register_app_error_cb(error):
+    print(f'Failed to register application: {error}')
+    mainloop.quit()
+
+def find_adapter(bus):
+    remote_om = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, '/'), DBUS_OM_IFACE)
+    objects = remote_om.GetManagedObjects()
+
+    for o, props in objects.items():
+        if GATT_MANAGER_IFACE in props.keys():
+            return o
+
+    return None
+
+def main():
+    global mainloop
+
+    dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+
+    bus = dbus.SystemBus()
+
+    adapter = find_adapter(bus)
+    if not adapter:
+        print('GattManager1 interface not found')
+        return
+
+    service_manager = dbus.Interface(
+            bus.get_object(BLUEZ_SERVICE_NAME, adapter),
+            GATT_MANAGER_IFACE)
+
+    app = Application(bus)
+
+    print('Registering GATT application...')
+
+    service_manager.RegisterApplication(app.get_path(), {},
+                                reply_handler=register_app_cb,
+                                error_handler=register_app_error_cb)
+
+    mainloop = GLib.MainLoop()
+    print('BLE service is now running with fixed string value: ' + FIXED_STRING)
+    print('Press Ctrl+C to exit')
     try:
-        # Add service
-        peripheral.service = Service(UUID(SERVICE_UUID), True)
+        mainloop.run()
+    except KeyboardInterrupt:
+        print("Shutting down")
 
-        # Add characteristic
-        peripheral.characteristic = Characteristic(
-            UUID(CHAR_UUID),
-            Characteristic.PROP_READ,
-            Characteristic.PERM_READ,
-            FIXED_STRING.encode()
-        )
-
-        # Add the characteristic to the service
-        peripheral.service.addCharacteristic(peripheral.characteristic)
-
-        # Add the service to the peripheral
-        peripheral.addService(peripheral.service)
-
-        print(f"Service {SERVICE_UUID} registered")
-        print(f"Characteristic {CHAR_UUID} added with value: {FIXED_STRING}")
-
-    except Exception as e:
-        print(f"Error registering service: {e}")
-        peripheral.disconnect()
-        sys.exit(1)
-
-
-def signal_handler(sig, frame):
-    """Handle keyboard interrupt"""
-    print("Ctrl+C pressed. Shutting down...")
-    if p:
-        p.disconnect()
-    sys.exit(0)
-
-
-if __name__ == "__main__":
-    signal.signal(signal.SIGINT, signal_handler)
-
-    p = MyPeripheral()
-    delegate = MyDelegate(p)
-    p.withDelegate(delegate)
-
-    # Register our service and characteristic
-    register_service(p)
-
-    # Advertise our service
-    # advertise_service()
-
-    print("BLE service is now running. Press Ctrl+C to exit.")
-    try:
-        while True:
-            if p.waitForNotifications(1.0):
-                continue
-            # Do any additional background processing here
-    except Exception as e:
-        print(f"Error: {e}")
-    finally:
-        if p:
-            p.disconnect()
+if __name__ == '__main__':
+    main()
