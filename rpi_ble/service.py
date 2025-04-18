@@ -8,9 +8,6 @@ import dbus.service
 
 from gi.repository import GLib
 
-from gps_gatt_service import GpsGattService
-from obd_gatt_service import ObdGattService
-
 BLUEZ_SERVICE_NAME = 'org.bluez'
 GATT_MANAGER_IFACE = 'org.bluez.GattManager1'
 DBUS_OM_IFACE = 'org.freedesktop.DBus.ObjectManager'
@@ -225,6 +222,9 @@ def find_adapter(bus):
 
 class Application(dbus.service.Object):
     def __init__(self, bus):
+        from rpi_ble.gps_gatt_service import GpsGattService
+        from rpi_ble.obd_gatt_service import ObdGattService
+
         self.path = '/'
         self.services = []
         dbus.service.Object.__init__(self, bus, self.path)
