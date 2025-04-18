@@ -12,7 +12,7 @@ class ObdGattService(GattService, TemperatureReceiver, FuelLevelReceiver):
     OBD_UUID = '0000180d-0000-1000-8000-00805f9b34fb'
 
     def __init__(self, bus, index):
-        GattService.__init__(self, bus, index, self.GPS_UUID, True)
+        GattService.__init__(self, bus, index, self.OBD_UUID, True)
         self.engine_temp_characteristic = EngineTempObdChrc(bus, 0, self)
         self.fuel_level_characteristic = FuelLevelObdChrc(bus, 1, self)
         self.add_characteristic(self.engine_temp_characteristic)
