@@ -12,7 +12,8 @@ from event_defs import ExitApplicationEvent
 from obd_reader import ObdReader
 from gps_reader import GpsReader
 from usb_detector import UsbDetector, UsbDevice
-from service import *
+
+import service as s1
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ def main():
 
     bus = dbus.SystemBus()
     logger.info("initializing application")
-    app = Application(bus)
+    app = s1.Application(bus)
 
     mainloop = app.get_mainloop()
 
