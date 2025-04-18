@@ -222,12 +222,11 @@ def find_adapter(bus):
 
 class Application(dbus.service.Object):
     def __init__(self, bus):
-        from rpi_ble.gps_gatt_service import GpsGattService
-        from rpi_ble.obd_gatt_service import ObdGattService
-
         self.path = '/'
         self.services = []
         dbus.service.Object.__init__(self, bus, self.path)
+        from rpi_ble.gps_gatt_service import GpsGattService
+        from rpi_ble.obd_gatt_service import ObdGattService
         self.gps_service = GpsGattService(bus, 0)
         self.obd_service - ObdGattService(bus, 1)
         self.services.append(self.gps_service)
