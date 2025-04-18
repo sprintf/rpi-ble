@@ -13,7 +13,7 @@ from obd_reader import ObdReader
 from gps_reader import GpsReader
 from usb_detector import UsbDetector, UsbDevice
 
-import service as s1
+from service import Application
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def main():
 
     bus = dbus.SystemBus()
     logger.info("initializing application")
-    app = s1.Application(bus)
+    app = Application(bus)
 
     mainloop = app.get_mainloop()
 

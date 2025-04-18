@@ -37,57 +37,6 @@ class InvalidValueLengthException(dbus.exceptions.DBusException):
 class FailedException(dbus.exceptions.DBusException):
     _dbus_error_name = 'org.bluez.Error.Failed'
 
-class Application(dbus.service.Object):
-    def __init__(self, bus):
-        self.path = '/'
-        self.services = []
-        dbus.service.Object.__init__(self, bus, self.path)
-        self.gps_service = GpsGattService(bus, 0)
-        self.obd_service - ObdGattService(bus, 1)
-        self.services.append(self.gps_service)
-        self.services.append(self.obd_service)
-
-    def register_application(self, bus):
-        adapter = find_adapter(bus)
-        if not adapter:
-            print('GattManager1 interface not found')
-            return
-
-        service_manager = dbus.Interface(
-            bus.get_object(BLUEZ_SERVICE_NAME, adapter),
-            GATT_MANAGER_IFACE)
-
-        service_manager.RegisterApplication(self.get_path(), {},
-                                            reply_handler=register_app_cb,
-                                            error_handler=register_app_error_cb)
-
-    def get_mainloop(self):
-        global mainloop
-        mainloop = GLib.MainLoop()
-        return mainloop
-
-    def get_path(self):
-        return dbus.ObjectPath(self.path)
-
-    def get_gps_service(self):
-        return self.gps_service
-
-    def get_obd_servics(self):
-        return self.obd_service
-
-    @dbus.service.method(DBUS_OM_IFACE, out_signature='a{oa{sa{sv}}}')
-    def GetManagedObjects(self):
-        response = {}
-        for service in self.services:
-            response[service.get_path()] = service.get_properties()
-            chrcs = service.get_characteristics()
-            for chrc in chrcs:
-                response[chrc.get_path()] = chrc.get_properties()
-                descriptors = chrc.get_descriptors()
-                for desc in descriptors:
-                    response[desc.get_path()] = desc.get_properties()
-        return response
-
 class GattService(dbus.service.Object):
     PATH_BASE = '/com/normtronix/lemonpi/service'
 
@@ -255,9 +204,6 @@ class Descriptor(dbus.service.Object):
         print('Default WriteValue called, returning error')
         raise NotSupportedException()
 
-
-
-
 # remnants
 
 def register_app_cb():
@@ -276,3 +222,54 @@ def find_adapter(bus):
             return o
 
     return None
+
+class Application(dbus.service.Object):
+    def __init__(self, bus):
+        self.path = '/'
+        self.services = []
+        dbus.service.Object.__init__(self, bus, self.path)
+        self.gps_service = GpsGattService(bus, 0)
+        self.obd_service - ObdGattService(bus, 1)
+        self.services.append(self.gps_service)
+        self.services.append(self.obd_service)
+
+    def register_application(self, bus):
+        adapter = find_adapter(bus)
+        if not adapter:
+            print('GattManager1 interface not found')
+            return
+
+        service_manager = dbus.Interface(
+            bus.get_object(BLUEZ_SERVICE_NAME, adapter),
+            GATT_MANAGER_IFACE)
+
+        service_manager.RegisterApplication(self.get_path(), {},
+                                            reply_handler=register_app_cb,
+                                            error_handler=register_app_error_cb)
+
+    def get_mainloop(self):
+        global mainloop
+        mainloop = GLib.MainLoop()
+        return mainloop
+
+    def get_path(self):
+        return dbus.ObjectPath(self.path)
+
+    def get_gps_service(self):
+        return self.gps_service
+
+    def get_obd_servics(self):
+        return self.obd_service
+
+    @dbus.service.method(DBUS_OM_IFACE, out_signature='a{oa{sa{sv}}}')
+    def GetManagedObjects(self):
+        response = {}
+        for service in self.services:
+            response[service.get_path()] = service.get_properties()
+            chrcs = service.get_characteristics()
+            for chrc in chrcs:
+                response[chrc.get_path()] = chrc.get_properties()
+                descriptors = chrc.get_descriptors()
+                for desc in descriptors:
+                    response[desc.get_path()] = desc.get_properties()
+        return response
