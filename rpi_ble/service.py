@@ -226,8 +226,8 @@ class Application(dbus.service.Object):
         self.services = []
         dbus.service.Object.__init__(self, bus, self.path)
         from rpi_ble.gps_gatt_service import GpsGattService
-        from rpi_ble.obd_gatt_service import ObdGattService
         self.gps_service = GpsGattService(bus, 0)
+        from rpi_ble.obd_gatt_service import ObdGattService
         self.obd_service - ObdGattService(bus, 1)
         self.services.append(self.gps_service)
         self.services.append(self.obd_service)
