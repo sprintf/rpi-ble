@@ -1,6 +1,6 @@
 import dbus
 
-from rpi_ble.interfaces import GpsReceiver
+from interfaces import GpsReceiver
 from service import GattService, GattCharacteristic, GATT_CHRC_IFACE
 
 

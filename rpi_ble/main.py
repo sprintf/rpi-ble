@@ -6,12 +6,13 @@ import dbus.service
 import logging
 import time
 
-from rpi_ble.interfaces import ObdReceiver
-from service import Application
+
+from interfaces import ObdReceiver
 from event_defs import ExitApplicationEvent
 from obd_reader import ObdReader
 from gps_reader import GpsReader
 from usb_detector import UsbDetector, UsbDevice
+from service import *
 
 logger = logging.getLogger(__name__)
 
