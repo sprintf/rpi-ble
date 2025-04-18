@@ -1,10 +1,10 @@
 import dbus
 
 from interfaces import TemperatureReceiver, FuelLevelReceiver, FuelLevelReceiver
-from service import GattService, GattCharacteristic, GATT_CHRC_IFACE
+import service as s3
 
 
-class ObdGattService(GattService, TemperatureReceiver, FuelLevelReceiver):
+class ObdGattService(s3.GattService, TemperatureReceiver, FuelLevelReceiver):
     """
     Send gps data on a frequent basis
     """
@@ -12,7 +12,7 @@ class ObdGattService(GattService, TemperatureReceiver, FuelLevelReceiver):
     OBD_UUID = '0000180d-0000-1000-8000-00805f9b34fb'
 
     def __init__(self, bus, index):
-        GattService.__init__(self, bus, index, self.GPS_UUID, True)
+        s3.GattService.__init__(self, bus, index, self.GPS_UUID, True)
         self.engine_temp_characteristic = EngineTempObdChrc(bus, 0, self)
         self.fuel_level_characteristic = FuelLevelObdChrc(bus, 1, self)
         self.add_characteristic(self.engine_temp_characteristic)
@@ -25,12 +25,12 @@ class ObdGattService(GattService, TemperatureReceiver, FuelLevelReceiver):
     def set_fuel_percent_remaining(self, percent: int) -> None:
         self.fuel_level_characteristic.set_fuel_percent_remaining(percent)
 
-class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
+class EngineTempObdChrc(s3.GattCharacteristic, TemperatureReceiver):
     # TODO : get a real UUID
     ENGINE_TEMP_UUID = '00002a37-0000-1000-8000-00805f9b34fb'
 
     def __init__(self, bus, index, service):
-        GattCharacteristic.__init__(
+        s3.GattCharacteristic.__init__(
             self, bus, index,
             self.ENGINE_TEMP_UUID,
             ['notify'],
@@ -41,7 +41,7 @@ class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
     def set_temp_f(self, temperature: int):
         value = []
         value.append(dbus.UInt32(int))
-        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+        self.PropertiesChanged(s3.GATT_CHRC_IFACE, {'Value': value}, [])
 
         return self.notifying
 
@@ -59,12 +59,12 @@ class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
 
         self.notifying = False
 
-class FuelLevelObdChrc(GattCharacteristic, FuelLevelReceiver):
+class FuelLevelObdChrc(s3.GattCharacteristic, FuelLevelReceiver):
     # TODO : get a real UUID
     FUEL_LEVEL_UUID = '00002a37-0000-1000-8000-00805f9b34fb'
 
     def __init__(self, bus, index, service):
-        GattCharacteristic.__init__(
+        s3.GattCharacteristic.__init__(
             self, bus, index,
             self.FUEL_LEVEL_UUID,
             ['notify'],
@@ -81,7 +81,7 @@ class FuelLevelObdChrc(GattCharacteristic, FuelLevelReceiver):
 
         value.append(dbus.UInt32(percent))
 
-        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+        self.PropertiesChanged(s3.GATT_CHRC_IFACE, {'Value': value}, [])
 
         return self.notifying
 

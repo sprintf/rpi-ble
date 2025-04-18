@@ -1,17 +1,17 @@
 import dbus
 
 from interfaces import GpsReceiver
-from service import GattService, GattCharacteristic, GATT_CHRC_IFACE
+import service as s2
 
 
-class GpsGattService(GattService, GpsReceiver):
+class GpsGattService(s2.GattService, GpsReceiver):
     """
     Send gps data on a frequent basis
     """
     GPS_UUID = '00001101-0000-1000-8000-00805F9B34FB'
 
     def __init__(self, bus, index):
-        GattService.__init__(self, bus, index, self.GPS_UUID, True)
+        s2.GattService.__init__(self, bus, index, self.GPS_UUID, True)
         self.gps_characteristic = GpsChrc(bus, 0, self)
         self.add_characteristic(self.gps_characteristic)
         self.energy_expended = 0
@@ -19,13 +19,13 @@ class GpsGattService(GattService, GpsReceiver):
     def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float, speed: int) -> None:
         self.gps_characteristic.set_gps_position()
 
-class GpsChrc(GattCharacteristic, GpsReceiver):
+class GpsChrc(s2.GattCharacteristic, GpsReceiver):
     # this is a general sensor
     # todo ... need more in here
     GPS_DATA_UUID = '0x0541'
 
     def __init__(self, bus, index, service):
-        GattCharacteristic.__init__(
+        s2.GattCharacteristic.__init__(
             self, bus, index,
             self.GPS_DATA_UUID,
             ['notify'],
@@ -46,7 +46,7 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
         value.append(dbus.UInt32(tstamp - int(tstamp)))
         value.append(dbus.UInt16(speed * 10))
 
-        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+        self.PropertiesChanged(s2.GATT_CHRC_IFACE, {'Value': value}, [])
 
         return self.notifying
 
