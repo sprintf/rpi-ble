@@ -16,7 +16,7 @@ from usb_detector import UsbDetector, UsbDevice
 from service import Application
 
 logger = logging.getLogger(__name__)
-
+logging.basicConfig(level=logging.DEBUG)
 
 def main():
 
