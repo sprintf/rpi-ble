@@ -35,7 +35,7 @@ class FailedException(dbus.exceptions.DBusException):
     _dbus_error_name = 'org.bluez.Error.Failed'
 
 class GattService(dbus.service.Object):
-    PATH_BASE = '/com/normtronix/lemonpi/service'
+    PATH_BASE = '/org/bluez/lemonpi/service'
 
     def __init__(self, bus, index, uuid, primary):
         self.path = self.PATH_BASE + str(index)
