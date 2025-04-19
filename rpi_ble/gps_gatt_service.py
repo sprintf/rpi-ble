@@ -22,7 +22,7 @@ class GpsGattService(GattService, GpsReceiver):
 class GpsChrc(GattCharacteristic, GpsReceiver):
     # this is a general sensor
     # todo ... need more in here
-    GPS_DATA_UUID = '0x0541'
+    GPS_DATA_UUID = '00000002-710e-4a5b-8d75-3e5b444bc3cf' #'0x0541'
 
     def __init__(self, bus, index, service):
         GattCharacteristic.__init__(

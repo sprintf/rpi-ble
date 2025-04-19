@@ -229,9 +229,9 @@ class Application(dbus.service.Object):
         from rpi_ble.gps_gatt_service import GpsGattService
         from rpi_ble.obd_gatt_service import ObdGattService
         self.gps_service = GpsGattService(bus, 0)
-        self.obd_service = ObdGattService(bus, 1)
+        # self.obd_service = ObdGattService(bus, 1)
         self.services.append(self.gps_service)
-        self.services.append(self.obd_service)
+        # self.services.append(self.obd_service)
 
     def register_application(self, bus):
         adapter = find_adapter(bus)
