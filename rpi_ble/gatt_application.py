@@ -68,7 +68,7 @@ class GattApplication(dbus.service.Object):
                 response[chrc.get_path()] = chrc.get_properties()
                 descriptors = chrc.get_descriptors()
                 for desc in descriptors:
-                    response[desc.get_path()] = desc.get_properties()nano
+                    response[desc.get_path()] = desc.get_properties()
         pprint.pprint(response)
         return response
 
