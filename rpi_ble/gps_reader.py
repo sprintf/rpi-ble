@@ -12,9 +12,8 @@ import time
 import os
 import subprocess
 
-from events import EventHandler
-from interfaces import GpsReceiver
-from usb_detector import UsbDetector, UsbDevice
+from rpi_ble.interfaces import GpsReceiver
+from rpi_ble.usb_detector import UsbDetector, UsbDevice
 
 logger = logging.getLogger(__name__)
 

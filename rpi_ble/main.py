@@ -7,16 +7,20 @@ import logging
 import time
 
 
-from interfaces import ObdReceiver
-from event_defs import ExitApplicationEvent
-from obd_reader import ObdReader
-from gps_reader import GpsReader
-from usb_detector import UsbDetector, UsbDevice
+from rpi_ble.interfaces import ObdReceiver
+from rpi_ble.event_defs import ExitApplicationEvent
+from rpi_ble.obd_reader import ObdReader
+from rpi_ble.gps_reader import GpsReader
+from rpi_ble.usb_detector import UsbDetector, UsbDevice
 
-from service import Application
+from gatt_application import GattApplication
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s %(name)s %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    level=logging.DEBUG)
+
+mainloop = None
 
 def main():
 
@@ -25,7 +29,7 @@ def main():
 
     bus = dbus.SystemBus()
     logger.info("initializing application")
-    app = Application(bus)
+    app = GattApplication(bus)
 
     mainloop = app.get_mainloop()
 

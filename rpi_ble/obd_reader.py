@@ -10,9 +10,9 @@ import platform
 from threading import Thread
 # from python_settings import settings
 
-from event_defs import OBDConnectedEvent, OBDDisconnectedEvent, ExitApplicationEvent
-from interfaces import ObdReceiver
-from usb_detector import UsbDetector, UsbDevice
+from rpi_ble.event_defs import OBDConnectedEvent, OBDDisconnectedEvent, ExitApplicationEvent
+from rpi_ble.interfaces import ObdReceiver
+from rpi_ble.usb_detector import UsbDetector, UsbDevice
 
 logger = logging.getLogger(__name__)
 

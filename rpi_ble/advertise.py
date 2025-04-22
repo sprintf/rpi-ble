@@ -1,5 +1,5 @@
 
-from constants import SERVICE_UUID
+from rpi_ble.constants import SERVICE_UUID
 
 """Advertise our BLE service"""
 

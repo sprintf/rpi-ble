@@ -1,50 +1,46 @@
+from json import JSONEncoder
+from tokenize import String
+
 import dbus
 
-from interfaces import GpsReceiver
-from service import GattService, GattCharacteristic, GATT_CHRC_IFACE
+from rpi_ble.constants import GPS_SERVICE_UUID, GPS_DATA_CHRC_UUID, GPS_DATA_DESCRIPTOR_UUID
+from rpi_ble.interfaces import GpsReceiver
+from rpi_ble.service import GattService, GattCharacteristic, GATT_CHRC_IFACE, Descriptor, NotifyDescriptor
 
 
 class GpsGattService(GattService, GpsReceiver):
     """
     Send gps data on a frequent basis
     """
-    GPS_UUID = '00001101-0000-1000-8000-00805F9B34FB'
 
     def __init__(self, bus, index):
-        GattService.__init__(self, bus, index, self.GPS_UUID, True)
+        GattService.__init__(self, bus, index, GPS_SERVICE_UUID, True)
         self.gps_characteristic = GpsChrc(bus, 0, self)
         self.add_characteristic(self.gps_characteristic)
         self.energy_expended = 0
 
     def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float, speed: int) -> None:
-        self.gps_characteristic.set_gps_position()
+        self.gps_characteristic.set_gps_position(lat, long, heading, tstamp, speed)
 
 class GpsChrc(GattCharacteristic, GpsReceiver):
     # this is a general sensor
-    # todo ... need more in here
-    GPS_DATA_UUID = '00000002-710e-4a5b-8d75-3e5b444bc3cf' #'0x0541'
 
     def __init__(self, bus, index, service):
         GattCharacteristic.__init__(
-            self, bus, index,
-            self.GPS_DATA_UUID,
-            ['notify'],
+            self,
+            bus,
+            index,
+            GPS_DATA_CHRC_UUID,
+            ['notify', 'read'],
             service)
+        self.add_descriptor(GpsDescriptor(bus, 0, self))
+        self.add_descriptor(NotifyDescriptor(bus, 1, self))
         self.notifying = False
-        self.hr_ee_count = 0
+        self.gps_pos = GpsPos(0, 0, 0, 0, 0)
 
     def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float, speed: int):
-        value = []
-        ## length = 64 + 64 + 64 + 32 ... about 220 bytes
-        # if we need to we can unpack these into int and fraction .. use 1 byte for int and a 32 or a 16 for the fraction
-        value.append(dbus.Double(lat))
-        value.append(dbus.Double(long))
-        value.append(dbus.UInt16(heading * 10))
-        # todo : can an int timestamp be set into an array like this?
-        value.append(dbus.UInt32(int(tstamp)))
-        # todo : can the float part get there with the correct precision
-        value.append(dbus.UInt32(tstamp - int(tstamp)))
-        value.append(dbus.UInt16(speed * 10))
+        self.gps_pos = GpsPos(lat, long, heading, tstamp, speed)
+        value = self.ReadValue(None)
 
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
 
@@ -63,4 +59,58 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
             return
 
         self.notifying = False
+
+    def ReadValue(self, options):
+        value = []
+        gps_str = self.gps_pos.toJSON()
+        for c in gps_str:
+            value.append(dbus.Byte(c.encode()))
+        return value
+
+class GpsPos:
+
+    def __init__(self, lat: float, long: float, heading: float, tstamp: float, speed: int ):
+        self.lat = lat
+        self.long = long
+        self.heading = heading
+        self.tstamp = tstamp
+        self.speed = speed
+
+    def __eq__(self, other):
+        if isinstance(other, GpsPos):
+            return self.toJSON() == other.toJSON()
+        return False
+
+    def toJSON(self) -> String:
+        fields = {
+            'lat': self.lat,
+            'long': self.long,
+            'hdg': self.heading,
+            'tstamp': self.tstamp,
+            'spd': self.speed
+
+        }
+        return JSONEncoder().encode(fields)
+
+class GpsDescriptor(Descriptor):
+    GPS_DESCRIPTOR_VALUE = "GPS Position"
+
+    def __init__(self, bus, index, characteristic):
+        Descriptor.__init__(
+            self,
+            bus,
+            index,
+            GPS_DATA_DESCRIPTOR_UUID,
+            ["read"],
+            characteristic)
+
+    def ReadValue(self, options):
+        value = []
+        desc = self.GPS_DESCRIPTOR_VALUE
+
+        for c in desc:
+            value.append(dbus.Byte(c.encode()))
+
+        return value
+
 
