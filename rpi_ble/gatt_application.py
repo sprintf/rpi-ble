@@ -1,4 +1,5 @@
 
+import pprint
 import dbus
 import dbus.exceptions
 import dbus.mainloop.glib
@@ -67,7 +68,8 @@ class GattApplication(dbus.service.Object):
                 response[chrc.get_path()] = chrc.get_properties()
                 descriptors = chrc.get_descriptors()
                 for desc in descriptors:
-                    response[desc.get_path()] = desc.get_properties()
+                    response[desc.get_path()] = desc.get_properties()nano
+        pprint.pprint(response)
         return response
 
 def register_app_cb():

@@ -61,7 +61,7 @@ def main():
         logger.info("Shutting down due to CTRL-C")
 
     # tell everything we're shutting down
-    logger.info("sending shurtown notification")
+    logger.info("sending shutdown notification")
     ExitApplicationEvent.emit()
     time.sleep(1)
     logger.info("Shutdown Complete. Good Bye!")
