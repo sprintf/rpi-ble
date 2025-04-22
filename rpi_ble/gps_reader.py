@@ -4,7 +4,6 @@ from gps import *
 
 from dateutil import parser
 from threading import Thread
-from event_defs import ExitApplicationEvent, GPSConnectedEvent, GPSDisconnectedEvent
 
 #todo : think about doing moving and not moving ... can save some battery on BLE maybe
 import logging
@@ -12,6 +11,7 @@ import time
 import os
 import subprocess
 
+from rpi_ble.event_defs import ExitApplicationEvent, GPSConnectedEvent, GPSDisconnectedEvent
 from rpi_ble.interfaces import GpsReceiver
 from rpi_ble.usb_detector import UsbDetector, UsbDevice
 

@@ -13,7 +13,7 @@ from rpi_ble.obd_reader import ObdReader
 from rpi_ble.gps_reader import GpsReader
 from rpi_ble.usb_detector import UsbDetector, UsbDevice
 
-from gatt_application import GattApplication
+from rpi_ble.gatt_application import GattApplication
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(name)s %(message)s',

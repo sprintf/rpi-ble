@@ -6,7 +6,6 @@ import dbus.service
 
 from gi.repository import GLib
 
-from main import mainloop
 from rpi_ble.constants import BLUEZ_SERVICE_NAME, GATT_MANAGER_IFACE, DBUS_OM_IFACE
 
 
