@@ -4,7 +4,7 @@ import dbus
 import dbus.service
 
 from rpi_ble.constants import LE_ADVERTISEMENT_IFACE, DBUS_PROP_IFACE, BLUEZ_SERVICE_NAME, LE_ADVERTISING_MANAGER_IFACE
-from rpi_ble.gatt_application import find_adapter
+from rpi_ble.utils import find_adapter
 from rpi_ble.service import InvalidArgsException
 
 

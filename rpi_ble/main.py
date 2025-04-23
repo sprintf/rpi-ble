@@ -6,11 +6,8 @@ import dbus.service
 import logging
 import time
 
-from rpi_ble.device_status_gatt_service import DeviceStatusAdvertisement
-from rpi_ble.gps_gatt_service import GpsAdvertisement
 from rpi_ble.interfaces import ObdReceiver
 from rpi_ble.event_defs import ExitApplicationEvent
-from rpi_ble.obd_gatt_service import ObdAdvertisement
 from rpi_ble.obd_reader import ObdReader
 from rpi_ble.gps_reader import GpsReader
 from rpi_ble.usb_detector import UsbDetector, UsbDevice

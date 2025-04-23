@@ -8,6 +8,7 @@ from gi.repository import GLib
 
 from rpi_ble.constants import BLUEZ_SERVICE_NAME, GATT_MANAGER_IFACE, DBUS_OM_IFACE
 from rpi_ble.gatt_advertisement import GattAdvertisement
+from rpi_ble.utils import find_adapter
 
 
 class LemonPiAdvertisement(GattAdvertisement):
@@ -84,12 +85,4 @@ def register_app_error_cb(error):
     print(f'Failed to register application: {error}')
     mainloop.quit()
 
-def find_adapter(bus):
-    remote_om = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, '/'), DBUS_OM_IFACE)
-    objects = remote_om.GetManagedObjects()
 
-    for o, props in objects.items():
-        if GATT_MANAGER_IFACE in props.keys():
-            return o
-
-    return None
