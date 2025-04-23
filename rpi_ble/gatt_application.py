@@ -22,17 +22,14 @@ class GattApplication(dbus.service.Object):
         self.path = '/'
         self.services = []
         dbus.service.Object.__init__(self, bus, self.path)
-        from rpi_ble.temp_gatt_service import ThermometerGattService
-        self.thermometerService = ThermometerGattService(bus, 0)
-        self.add_service(self.thermometerService)
         from rpi_ble.device_status_gatt_service import DeviceStatusGattService
-        self.add_service(DeviceStatusGattService(bus, 1))
-        #from rpi_ble.gps_gatt_service import GpsGattService
+        from rpi_ble.gps_gatt_service import GpsGattService
         from rpi_ble.obd_gatt_service import ObdGattService
-        #self.gps_service = GpsGattService(bus, 0)
-        # self.obd_service = ObdGattService(bus, 1)
-        #self.services.append(self.gps_service)
-        # self.services.append(self.obd_service)
+        self.gps_service = GpsGattService(bus, 0)
+        self.obd_service = ObdGattService(bus, 1)
+        self.add_service(self.gps_service)
+        self.add_service(self.obd_service)
+        self.add_service(DeviceStatusGattService(bus, 2))
 
     def add_service(self, service):
         self.services.append(service)

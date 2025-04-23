@@ -17,4 +17,4 @@ class TestApplication(unittest.TestCase):
         bus = Mock()
         app = GattApplication(bus)
         props = app.GetManagedObjects()
-        self.assertEqual(12, len(props))
+        self.assertEqual(18, len(props))
