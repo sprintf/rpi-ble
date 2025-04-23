@@ -88,7 +88,7 @@ class GattCharacteristic(dbus.service.Object):
                 'UUID': self.uuid,
                 'Flags': self.flags,
                 'Descriptors': dbus.Array(
-                    self.get_descritor_parts(),
+                    self.get_descriptor_paths(),
                     # this means its a dbus path
                     signature='o'
                 )
