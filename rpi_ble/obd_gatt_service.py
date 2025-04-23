@@ -4,7 +4,6 @@ from rpi_ble.constants import OBD_SERVICE_UUID, ENGINE_TEMP_CHRC_UUID, FUEL_LEVE
 from rpi_ble.interfaces import TemperatureReceiver, FuelLevelReceiver, FuelLevelReceiver
 from rpi_ble.service import GattService, GattCharacteristic, GATT_CHRC_IFACE, Descriptor, NotifyDescriptor
 
-
 class ObdGattService(GattService, TemperatureReceiver, FuelLevelReceiver):
     """
     Send obd data on a frequent basis

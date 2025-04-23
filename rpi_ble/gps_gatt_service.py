@@ -7,7 +7,6 @@ from rpi_ble.constants import GPS_SERVICE_UUID, GPS_DATA_CHRC_UUID, GPS_DATA_DES
 from rpi_ble.interfaces import GpsReceiver
 from rpi_ble.service import GattService, GattCharacteristic, GATT_CHRC_IFACE, Descriptor, NotifyDescriptor
 
-
 class GpsGattService(GattService, GpsReceiver):
     """
     Send gps data on a frequent basis

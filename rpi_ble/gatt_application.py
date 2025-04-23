@@ -1,5 +1,4 @@
 
-import pprint
 import dbus
 import dbus.exceptions
 import dbus.mainloop.glib
@@ -8,7 +7,14 @@ import dbus.service
 from gi.repository import GLib
 
 from rpi_ble.constants import BLUEZ_SERVICE_NAME, GATT_MANAGER_IFACE, DBUS_OM_IFACE
+from rpi_ble.gatt_advertisement import GattAdvertisement
 
+
+class LemonPiAdvertisement(GattAdvertisement):
+    def __init__(self, bus, index):
+        GattAdvertisement.__init__(self, bus, index, "peripheral")
+        self.add_local_name("Lemon-Pi Device")
+        self.include_tx_power = True
 
 class GattApplication(dbus.service.Object):
     def __init__(self, bus):
@@ -69,7 +75,6 @@ class GattApplication(dbus.service.Object):
                 descriptors = chrc.get_descriptors()
                 for desc in descriptors:
                     response[desc.get_path()] = desc.get_properties()
-        pprint.pprint(response)
         return response
 
 def register_app_cb():

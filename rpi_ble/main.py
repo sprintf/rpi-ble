@@ -6,14 +6,16 @@ import dbus.service
 import logging
 import time
 
-
+from rpi_ble.device_status_gatt_service import DeviceStatusAdvertisement
+from rpi_ble.gps_gatt_service import GpsAdvertisement
 from rpi_ble.interfaces import ObdReceiver
 from rpi_ble.event_defs import ExitApplicationEvent
+from rpi_ble.obd_gatt_service import ObdAdvertisement
 from rpi_ble.obd_reader import ObdReader
 from rpi_ble.gps_reader import GpsReader
 from rpi_ble.usb_detector import UsbDetector, UsbDevice
 
-from rpi_ble.gatt_application import GattApplication
+from rpi_ble.gatt_application import GattApplication, LemonPiAdvertisement
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(asctime)s %(name)s %(message)s',
@@ -54,6 +56,9 @@ def main():
     app.register_application(bus)
 
     logger.info('BLE service is now running ')
+
+    LemonPiAdvertisement(bus, 0).register(bus)
+
     logger.info('Press Ctrl+C to exit')
     try:
         mainloop.run()
