@@ -1,3 +1,5 @@
+import dbus
+
 from rpi_ble.constants import GATT_MANAGER_IFACE, BLUEZ_SERVICE_NAME, DBUS_OM_IFACE
 
 
