@@ -100,7 +100,8 @@ class GpsReader(Thread):
                                     try:
                                         self.receiver.set_gps_position(self.lat, self.long,
                                                                        self.heading, gps_tstamp,
-                                                                       self.speed_mph)
+                                                                       self.speed_mph,
+                                                                       session.gdop, session.pdop)
                                     except Exception:
                                         logger.exception("issue with GPS listener.")
                                     finally:

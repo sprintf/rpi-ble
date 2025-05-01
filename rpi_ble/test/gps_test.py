@@ -42,8 +42,8 @@ class TestGps(unittest.TestCase):
         bus = Mock()
         service = GpsGattService(bus, 0)
         now = time.time()
-        service.set_gps_position(32.2, -32.2, 0.5, now, 10)
-        expected = GpsPos(32.2, -32.2, 0.5, now, 10)
+        service.set_gps_position(32.2, -32.2, 0.5, now, 10, 1.2, 1.5)
+        expected = GpsPos(32.2, -32.2, 0.5, now, 10, 1.2, 1.5)
         gps_chr: GpsChrc = service.characteristics[0]
         self.assertEqual(expected, gps_chr.gps_pos)
         gps_ser = gps_chr.ReadValue(None)

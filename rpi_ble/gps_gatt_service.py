@@ -1,4 +1,5 @@
 from json import JSONEncoder
+from os import fdopen
 from tokenize import String
 
 import dbus
@@ -18,8 +19,9 @@ class GpsGattService(GattService, GpsReceiver):
         self.add_characteristic(self.gps_characteristic)
         self.energy_expended = 0
 
-    def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float, speed: int) -> None:
-        self.gps_characteristic.set_gps_position(lat, long, heading, tstamp, speed)
+    def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float,
+                         speed: int, gdop: float, pdop: float) -> None:
+        self.gps_characteristic.set_gps_position(lat, long, heading, tstamp, speed, gdop, pdop)
 
 class GpsChrc(GattCharacteristic, GpsReceiver):
     # this is a general sensor
@@ -35,10 +37,10 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
         self.add_descriptor(GpsDescriptor(bus, 0, self))
         self.add_descriptor(NotifyDescriptor(bus, 1, self))
         self.notifying = False
-        self.gps_pos = GpsPos(0, 0, 0, 0, 0)
+        self.gps_pos = GpsPos(0, 0, 0, 0, 0, 0, 0)
 
-    def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float, speed: int):
-        self.gps_pos = GpsPos(lat, long, heading, tstamp, speed)
+    def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float, speed: int, gdop: float, pdop: float):
+        self.gps_pos = GpsPos(lat, long, heading, tstamp, speed, gdop, pdop)
         value = self.ReadValue(None)
 
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
@@ -68,12 +70,15 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
 
 class GpsPos:
 
-    def __init__(self, lat: float, long: float, heading: float, tstamp: float, speed: int ):
+    def __init__(self, lat: float, long: float, heading: float, tstamp: float,
+                 speed: int, gdop: float, pdop: float ):
         self.lat = lat
         self.long = long
         self.heading = heading
         self.tstamp = tstamp
         self.speed = speed
+        self.gdop = gdop
+        self.pdop = pdop
 
     def __eq__(self, other):
         if isinstance(other, GpsPos):
@@ -86,8 +91,9 @@ class GpsPos:
             'long': self.long,
             'hdg': self.heading,
             'tstamp': self.tstamp,
-            'spd': self.speed
-
+            'spd': self.speed,
+            'gdop': self.gdop,
+            'pdop': self.pdop,
         }
         return JSONEncoder().encode(fields)
 

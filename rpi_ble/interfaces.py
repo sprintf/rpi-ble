@@ -15,7 +15,8 @@ class FuelLevelReceiver:
 
 class GpsReceiver:
 
-    def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float, speed: int) -> None:
+    def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float,
+                         speed: int, gdop: float, pdop: float) -> None:
         pass
 
 
