@@ -3,5 +3,5 @@ pyserial==3.5
 obd>=0.7.2
 python-dateutil>=2.8.2
 git+https://github.com/sprintf/gps-3.19.1@main
-#pygobject
+pygobject==3.50.0
 
