@@ -50,12 +50,13 @@ class GpsReader(Thread):
                         data = session.next()
 
                         if session.fix.time and str(session.fix.time) != "nan":
-                            logger.debug("{} {} {} {} {}".
+                            logger.debug("{} {} {} {} {} {}".
                                          format(session.fix.time,
                                                 data['class'],
                                                 session.fix.latitude,
                                                 session.fix.longitude,
-                                                session.gdop))
+                                                session.gdop,
+                                                session.pdop))
                             gps_datetime = parser.isoparse(session.fix.time).astimezone()
                             if gps_datetime.year < 2021:
                                 logger.debug("time wonky, ignoring")
