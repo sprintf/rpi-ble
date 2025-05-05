@@ -62,9 +62,6 @@ class GpsReader(Thread):
                                 logger.debug("time wonky, ignoring")
                                 continue
                             gps_tstamp = gps_datetime.timestamp()
-                            gps_tstamp2 = session.real_sec + session.real_nsec / 1.0e9
-                            print(f"clock {session.clock_sec} nanos {session.clock_nsec} real {session.real_sec}")
-                            print(f"difference in time is {gps_tstamp} {gps_tstamp2} {abs(gps_tstamp - gps_tstamp2)} ")
                         else:
                             # we can't trust the onboard time anymore as we don't expect to have wifi
                             continue
