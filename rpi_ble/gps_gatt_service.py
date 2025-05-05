@@ -90,7 +90,7 @@ class GpsPos:
             'lat': self.lat,
             'long': self.long,
             'hdg': self.heading,
-            'tstamp': self.tstamp,
+            'tstamp': int(self.tstamp * 1000),
             'spd': self.speed,
             'gdop': self.gdop,
             'pdop': self.pdop,
