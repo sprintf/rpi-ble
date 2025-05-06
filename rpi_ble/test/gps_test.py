@@ -6,6 +6,7 @@ from unittest.mock import Mock
 import sys
 
 import dbus
+import math
 
 sys.modules['gi.repository'] = Mock()
 sys.modules['gpiozero'] = Mock()
@@ -44,6 +45,19 @@ class TestGps(unittest.TestCase):
         now = time.time()
         service.set_gps_position(32.2, -32.2, 0.5, now, 10, 1.2, 1.5)
         expected = GpsPos(32.2, -32.2, 0.5, now, 10, 1.2, 1.5)
+        gps_chr: GpsChrc = service.characteristics[0]
+        self.assertEqual(expected, gps_chr.gps_pos)
+        gps_ser = gps_chr.ReadValue(None)
+        result_str = ''.join(str(byte_string) for byte_string in gps_ser)
+        result = JSONDecoder().decode(result_str)
+        print(result)
+
+    def test_gps_serialization2(self):
+        bus = Mock()
+        service = GpsGattService(bus, 0)
+        now = time.time()
+        service.set_gps_position(32.2, -32.2, 0.5, now, 10, math.nan, math.nan)
+        expected = GpsPos(32.2, -32.2, 0.5, now, 10, 0.0, 0.0)
         gps_chr: GpsChrc = service.characteristics[0]
         self.assertEqual(expected, gps_chr.gps_pos)
         gps_ser = gps_chr.ReadValue(None)

@@ -3,6 +3,7 @@ from os import fdopen
 from tokenize import String
 
 import dbus
+from math import isnan
 
 from rpi_ble.constants import GPS_SERVICE_UUID, GPS_DATA_CHRC_UUID, GPS_DATA_DESCRIPTOR_UUID
 from rpi_ble.interfaces import GpsReceiver
@@ -92,8 +93,8 @@ class GpsPos:
             'hdg': self.heading,
             'tstamp': int(self.tstamp * 1000),
             'spd': self.speed,
-            'gdop': self.gdop,
-            'pdop': self.pdop,
+            'gdop': 0.0 if isnan(self.gdop) else self.gdop,
+            'pdop': 0.0 if isnan(self.pdop) else self.pdop,
         }
         return JSONEncoder().encode(fields)
 
