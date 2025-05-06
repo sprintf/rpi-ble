@@ -21,7 +21,7 @@ class ObdReader(Thread):
 
     refresh_rate = {
         obd.commands.COOLANT_TEMP: 10,
-        obd.commands.FUEL_LEVEL: 10,
+        # obd.commands.FUEL_LEVEL: 10,
     }
 
     def __init__(self, receiver: ObdReceiver):
@@ -109,7 +109,7 @@ class ObdReader(Thread):
             OBDDisconnectedEvent.emit()
             old_connection.close()
 
-        result = obd.OBD(port, protocol="", fast=True)
+        result = obd.OBD(port, fast=True)
         status = result.status()
         if status != obd.OBDStatus.CAR_CONNECTED:
             result.close()
@@ -161,5 +161,13 @@ if __name__ == "__main__":
                         datefmt='%Y-%m-%d %H:%M:%S',
                         level=logging.DEBUG)
 
+    class Receiver(ObdReceiver):
+
+        def set_fuel_percent_remaining(self, percent: int) -> None:
+            logger.info(f"fuel = {percent}%")
+
+        def set_temp_f(self, temperature: int) -> None:
+            logger.info(f"temp = {temperature}F")
+
     UsbDetector.init()
-    ObdReader().run()
+    ObdReader(Receiver(None)).run()
