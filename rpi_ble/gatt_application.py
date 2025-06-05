@@ -1,4 +1,7 @@
 
+import logging
+import time
+
 import dbus
 import dbus.exceptions
 import dbus.mainloop.glib
@@ -6,10 +9,11 @@ import dbus.service
 
 from gi.repository import GLib
 
-from rpi_ble.constants import BLUEZ_SERVICE_NAME, GATT_MANAGER_IFACE, DBUS_OM_IFACE
+from rpi_ble.constants import BLUEZ_SERVICE_NAME, GATT_MANAGER_IFACE, DBUS_OM_IFACE, DBUS_PROP_IFACE
 from rpi_ble.gatt_advertisement import GattAdvertisement
 from rpi_ble.utils import find_adapter
 
+logger = logging.getLogger(__name__)
 
 class LemonPiAdvertisement(GattAdvertisement):
     def __init__(self, bus, index):
@@ -30,6 +34,13 @@ class GattApplication(dbus.service.Object):
         self.add_service(self.gps_service)
         self.add_service(self.obd_service)
         self.add_service(DeviceStatusGattService(bus, 2))
+
+        bus.add_signal_receiver(
+            properties_changed,
+            dbus_interface=DBUS_PROP_IFACE,
+            signal_name="PropertiesChanged",
+            path_keyword="/"
+        )
 
     def add_service(self, service):
         self.services.append(service)
@@ -81,5 +92,15 @@ def register_app_cb():
 def register_app_error_cb(error):
     print(f'Failed to register application: {error}')
     mainloop.quit()
+
+def properties_changed(interface, changed, invalidated, path):
+    if interface == "org.bluez.Device1" and "Connected" in changed:
+        if changed["Connected"]:
+            print(f"{time.asctime()} - Client connected: {path}")
+        else:
+            print(f"{time.asctime()} - Something changed: {changed}")
+    else:
+        print(f"{time.asctime()} - Something happened: {interface} : {changed}")
+
 
 

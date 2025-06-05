@@ -1,6 +1,6 @@
 from json import JSONEncoder
-from os import fdopen
 from tokenize import String
+import logging
 
 import dbus
 from math import isnan
@@ -8,6 +8,8 @@ from math import isnan
 from rpi_ble.constants import GPS_SERVICE_UUID, GPS_DATA_CHRC_UUID, GPS_DATA_DESCRIPTOR_UUID
 from rpi_ble.interfaces import GpsReceiver
 from rpi_ble.service import GattService, GattCharacteristic, GATT_CHRC_IFACE, Descriptor, NotifyDescriptor
+
+logger = logging.getLogger(__name__)
 
 class GpsGattService(GattService, GpsReceiver):
     """
@@ -49,6 +51,7 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
         return self.notifying
 
     def StartNotify(self):
+        logger.info("StartNotify called")
         if self.notifying:
             print('Already notifying, nothing to do')
             return
@@ -56,6 +59,7 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
         self.notifying = True
 
     def StopNotify(self):
+        logger.info("StopNotify called")
         if not self.notifying:
             print('Not notifying, nothing to do')
             return

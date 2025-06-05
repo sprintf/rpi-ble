@@ -40,13 +40,13 @@ def main():
     gps_thread = None
     if UsbDetector.detected(UsbDevice.GPS):
         gps_thread = GpsReader(app.get_gps_service())
-        gps_thread.start()
+        # gps_thread.start()
 
     # if there's an OBD device then fire up a thread to read it
     obd_thread = None
     if UsbDetector.detected(UsbDevice.OBD):
         obd_thread = ObdReader(ObdReceiver(app.get_obd_servics()))
-        obd_thread.start()
+        # obd_thread.start()
 
     logger.info('Registering GATT application...')
 
