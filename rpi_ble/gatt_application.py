@@ -39,7 +39,7 @@ class GattApplication(dbus.service.Object):
             properties_changed,
             dbus_interface=DBUS_PROP_IFACE,
             signal_name="PropertiesChanged",
-            # path="/"
+            path=None
         )
 
     def add_service(self, service):
