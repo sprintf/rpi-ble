@@ -30,7 +30,7 @@ class GpsGattService(GattService, GpsReceiver):
                          speed: int, gdop: float, pdop: float) -> None:
         self.gps_characteristic.set_gps_position(lat, long, heading, tstamp, speed, gdop, pdop)
 
-    def set_gps_enabled(self, enabled: bool):
+    def set_gps_connected(self):
         self.gps_connected = True
 
     def start_gps_thread(self) -> None:

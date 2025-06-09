@@ -30,7 +30,7 @@ class ObdGattService(GattService, TemperatureReceiver, FuelLevelReceiver):
     def set_fuel_percent_remaining(self, percent: int) -> None:
         self.fuel_level_characteristic.set_fuel_percent_remaining(percent)
 
-    def set_obd_enabled(self, enabled: bool):
+    def set_obd_connected(self):
         self.obd_connected = True
 
     def start_obd_thread(self) -> None:

@@ -37,9 +37,10 @@ def main():
     UsbDetector.init()
 
     # enable devices based on USB
-    app.get_gps_service().set_gps_enabled(UsbDetector.detected(UsbDevice.GPS))
-    app.get_obd_service().set_obd_enabled(UsbDetector.detected(UsbDevice.OBD))
-
+    if UsbDetector.detected(UsbDevice.GPS):
+        app.get_gps_service().set_gps_connected()
+    if UsbDetector.detected(UsbDevice.OBD):
+        app.get_obd_service().set_obd_connected()
 
     logger.info('Registering GATT application...')
 
