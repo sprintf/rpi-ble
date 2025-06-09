@@ -91,6 +91,7 @@ class GpsConnectedChrc(GattCharacteristic, EventHandler):
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
 
     def StartNotify(self):
+        logger.info("StartNotify called")
         if self.notifying:
             print('Already notifying, nothing to do')
             return
@@ -98,6 +99,7 @@ class GpsConnectedChrc(GattCharacteristic, EventHandler):
         self.notifying = True
 
     def StopNotify(self):
+        logger.info("StopNotify called")
         if not self.notifying:
             print('Not notifying, nothing to do')
             return

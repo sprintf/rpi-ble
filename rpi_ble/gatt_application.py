@@ -71,7 +71,7 @@ class GattApplication(dbus.service.Object):
     def get_gps_service(self):
         return self.gps_service
 
-    def get_obd_servics(self):
+    def get_obd_service(self):
         return self.obd_service
 
     @dbus.service.method(DBUS_OM_IFACE, out_signature='a{oa{sa{sv}}}')

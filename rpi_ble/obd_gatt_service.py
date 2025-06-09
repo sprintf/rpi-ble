@@ -1,8 +1,14 @@
 import dbus
+import logging
+
+from gi.repository import GLib
 
 from rpi_ble.constants import OBD_SERVICE_UUID, ENGINE_TEMP_CHRC_UUID, FUEL_LEVEL_CHRC_UUID
 from rpi_ble.interfaces import TemperatureReceiver, FuelLevelReceiver, FuelLevelReceiver
+from rpi_ble.obd_reader import ObdReader
 from rpi_ble.service import GattService, GattCharacteristic, GATT_CHRC_IFACE, Descriptor, NotifyDescriptor
+
+logger = logging.getLogger(__name__)
 
 class ObdGattService(GattService, TemperatureReceiver, FuelLevelReceiver):
     """
@@ -15,7 +21,8 @@ class ObdGattService(GattService, TemperatureReceiver, FuelLevelReceiver):
         self.fuel_level_characteristic = FuelLevelObdChrc(bus, 1, self)
         self.add_characteristic(self.engine_temp_characteristic)
         self.add_characteristic(self.fuel_level_characteristic)
-        self.energy_expended = 0
+        self.obd_thread = None
+        self.obd_connected = False
 
     def set_temp_f(self, temperature: int) -> None:
         self.engine_temp_characteristic.set_temp_f(temperature)
@@ -23,10 +30,20 @@ class ObdGattService(GattService, TemperatureReceiver, FuelLevelReceiver):
     def set_fuel_percent_remaining(self, percent: int) -> None:
         self.fuel_level_characteristic.set_fuel_percent_remaining(percent)
 
+    def set_obd_enabled(self, enabled: bool):
+        self.obd_connected = True
+
+    def start_obd_thread(self) -> None:
+        if self.obd_connected and not self.obd_thread:
+            self.obd_thread = GLib.Thread.new("obd-thread", run_obd_thread, self)
+
+    def stop_obd_thread(self) -> None:
+        pass
+
 
 class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
 
-    def __init__(self, bus, index, service):
+    def __init__(self, bus, index, service: ObdGattService):
         GattCharacteristic.__init__(
             self, bus, index,
             ENGINE_TEMP_CHRC_UUID,
@@ -36,6 +53,7 @@ class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
         self.add_descriptor(NotifyDescriptor(bus, 1, self))
         self.notifying = False
         self.temp_f = 0
+        self.service = service
 
     def set_temp_f(self, temperature: int):
         self.temp_f = temperature
@@ -46,13 +64,17 @@ class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
         return self.notifying
 
     def StartNotify(self):
+        logger.info("StartNotify called")
         if self.notifying:
             print('Already notifying, nothing to do')
             return
+        else:
+            self.service.start_obd_thread()
 
         self.notifying = True
 
     def StopNotify(self):
+        logger.info("StopNotify called")
         if not self.notifying:
             print('Not notifying, nothing to do')
             return
@@ -78,6 +100,7 @@ class FuelLevelObdChrc(GattCharacteristic, FuelLevelReceiver):
         self.add_descriptor(NotifyDescriptor(bus, 1, self))
         self.notifying = False
         self.fuel_level = 0
+        self.service = service
 
     def set_fuel_percent_remaining(self, percent: int):
         self.fuel_level = percent
@@ -90,6 +113,8 @@ class FuelLevelObdChrc(GattCharacteristic, FuelLevelReceiver):
         if self.notifying:
             print('Already notifying, nothing to do')
             return
+        else:
+            self.service.start_obd_thread()
 
         self.notifying = True
 
@@ -152,7 +177,8 @@ class FuelLevelObdDescriptor(Descriptor):
 
         return value
 
-
+def run_obd_thread(service: ObdGattService):
+    ObdReader(service).run()
 
 
 
