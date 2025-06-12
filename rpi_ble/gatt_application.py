@@ -125,8 +125,9 @@ class GattApplication(dbus.service.Object):
                     GLib.timeout_add(1000, self._restart_advertising)
         elif interface == "org.bluez.Device1":
             logger.debug(f"Device property changed on {path}: {changed}")
-        else:
-            logger.debug(f"Property changed: {interface} on {path}: {changed}")
+        # this is far too noisy
+        # else:
+        #     logger.debug(f"Property changed: {interface} on {path}: {changed}")
 
     def _restart_advertising(self):
         if len(self.connected_devices) == 0:
