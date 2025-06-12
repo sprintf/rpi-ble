@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  ble-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    privileged: true
+    network_mode: host
+    volumes:
+      - /var/run/dbus:/var/run/dbus
+    environment:
+      - DISPLAY=${DISPLAY}
+    stdin_open: true
+    tty: true

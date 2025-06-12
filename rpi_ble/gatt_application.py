@@ -25,6 +25,11 @@ class GattApplication(dbus.service.Object):
     def __init__(self, bus):
         self.path = '/'
         self.services = []
+        self.bus = bus
+        self.connected_devices = set()
+        self.advertisement = None
+        self.is_advertising = False
+        
         dbus.service.Object.__init__(self, bus, self.path)
         from rpi_ble.device_status_gatt_service import DeviceStatusGattService
         from rpi_ble.gps_gatt_service import GpsGattService
@@ -36,10 +41,9 @@ class GattApplication(dbus.service.Object):
         self.add_service(DeviceStatusGattService(bus, 2))
 
         bus.add_signal_receiver(
-            properties_changed,
+            self._properties_changed,
             dbus_interface=DBUS_PROP_IFACE,
             signal_name="PropertiesChanged",
-            path="/",
             path_keyword="path"
         )
 
@@ -74,6 +78,61 @@ class GattApplication(dbus.service.Object):
     def get_obd_service(self):
         return self.obd_service
 
+    def set_advertisement(self, advertisement):
+        self.advertisement = advertisement
+
+    def start_advertising(self):
+        if self.advertisement and not self.is_advertising:
+            try:
+                self.advertisement.register(self.bus)
+                self.is_advertising = True
+                logger.info("BLE advertising started")
+            except Exception as e:
+                logger.error(f"Failed to start advertising: {e}")
+
+    def stop_advertising(self):
+        if self.advertisement and self.is_advertising:
+            try:
+                from rpi_ble.utils import find_adapter
+                from rpi_ble.constants import BLUEZ_SERVICE_NAME, LE_ADVERTISING_MANAGER_IFACE
+                adapter = find_adapter(self.bus)
+                if adapter:
+                    ad_manager = dbus.Interface(
+                        self.bus.get_object(BLUEZ_SERVICE_NAME, adapter),
+                        LE_ADVERTISING_MANAGER_IFACE
+                    )
+                    ad_manager.UnregisterAdvertisement(self.advertisement.get_path())
+                    self.is_advertising = False
+                    logger.info("BLE advertising stopped")
+            except Exception as e:
+                logger.error(f"Failed to stop advertising: {e}")
+
+    def _properties_changed(self, interface, changed, invalidated, path):
+        if interface == "org.bluez.Device1" and "Connected" in changed:
+            if changed["Connected"]:
+                self.connected_devices.add(path)
+                if self.is_advertising:
+                    self.stop_advertising()
+                logger.info(f"BLE client connected: {path}")
+            else:
+                self.connected_devices.discard(path)
+                logger.info(f"BLE client disconnected: {path}")
+                
+                # Re-advertise when client disconnects
+                if len(self.connected_devices) == 0:
+                    logger.info("Client disconnected, restarting advertising")
+                    from gi.repository import GLib
+                    GLib.timeout_add(1000, self._restart_advertising)
+        elif interface == "org.bluez.Device1":
+            logger.debug(f"Device property changed on {path}: {changed}")
+        else:
+            logger.debug(f"Property changed: {interface} on {path}: {changed}")
+
+    def _restart_advertising(self):
+        if len(self.connected_devices) == 0:
+            self.start_advertising()
+        return False
+
     @dbus.service.method(DBUS_OM_IFACE, out_signature='a{oa{sa{sv}}}')
     def GetManagedObjects(self):
         response = {}
@@ -94,14 +153,6 @@ def register_app_error_cb(error):
     print(f'Failed to register application: {error}')
     mainloop.quit()
 
-def properties_changed(interface, changed, invalidated, path):
-    if interface == "org.bluez.Device1" and "Connected" in changed:
-        if changed["Connected"]:
-            print(f"{time.asctime()} - Client connected: {path}")
-        else:
-            print(f"{time.asctime()} - Something changed: {changed}")
-    else:
-        print(f"{time.asctime()} - Something happened: {interface} : {changed}")
 
 
 

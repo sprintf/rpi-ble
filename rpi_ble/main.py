@@ -48,7 +48,9 @@ def main():
 
     logger.info('BLE service is now running ')
 
-    LemonPiAdvertisement(bus, 0).register(bus)
+    advertisement = LemonPiAdvertisement(bus, 0)
+    app.set_advertisement(advertisement)
+    app.start_advertising()
 
     logger.info('Press Ctrl+C to exit')
     try:
