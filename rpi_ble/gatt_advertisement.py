@@ -102,9 +102,23 @@ class GattAdvertisement(dbus.service.Object):
 
     def register(self, bus):
         adapter = find_adapter(bus)
+        self.adapter = adapter
+        self.bus = bus
 
         ad_manager = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, adapter),
                                 LE_ADVERTISING_MANAGER_IFACE)
         ad_manager.RegisterAdvertisement(self.get_path(), {},
                                      reply_handler=self.register_ad_callback,
                                      error_handler=self.register_ad_error_callback)
+
+    def unregister(self):
+        """Unregister advertisement from BlueZ"""
+        if hasattr(self, 'adapter') and self.adapter and hasattr(self, 'bus'):
+            try:
+                ad_manager = dbus.Interface(
+                    self.bus.get_object(BLUEZ_SERVICE_NAME, self.adapter),
+                    LE_ADVERTISING_MANAGER_IFACE)
+                ad_manager.UnregisterAdvertisement(self.get_path())
+                print("Advertisement unregistered")
+            except Exception as e:
+                print(f"Failed to unregister advertisement: {e}")

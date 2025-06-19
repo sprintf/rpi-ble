@@ -56,6 +56,7 @@ class GattApplication(dbus.service.Object):
             print('GattManager1 interface not found')
             return
 
+        self.adapter_path = adapter
         service_manager = dbus.Interface(
             bus.get_object(BLUEZ_SERVICE_NAME, adapter),
             GATT_MANAGER_IFACE)
@@ -63,6 +64,41 @@ class GattApplication(dbus.service.Object):
         service_manager.RegisterApplication(self.get_path(), {},
                                             reply_handler=register_app_cb,
                                             error_handler=register_app_error_cb)
+
+    def unregister_application(self):
+        """Unregister GATT application from BlueZ"""
+        if hasattr(self, 'adapter_path') and self.adapter_path:
+            try:
+                service_manager = dbus.Interface(
+                    self.bus.get_object(BLUEZ_SERVICE_NAME, self.adapter_path),
+                    GATT_MANAGER_IFACE)
+                service_manager.UnregisterApplication(self.get_path())
+                logger.info("GATT application unregistered")
+            except Exception as e:
+                logger.error(f"Failed to unregister GATT application: {e}")
+
+    def cleanup(self):
+        """Clean up all BlueZ and D-Bus resources"""
+        logger.info("Starting cleanup...")
+        
+        # Stop advertising first
+        self.stop_advertising()
+        
+        # Unregister GATT application
+        self.unregister_application()
+        
+        # Remove signal receiver
+        try:
+            self.bus.remove_signal_receiver(
+                self._properties_changed,
+                dbus_interface=DBUS_PROP_IFACE,
+                signal_name="PropertiesChanged"
+            )
+            logger.info("Signal receiver removed")
+        except Exception as e:
+            logger.error(f"Failed to remove signal receiver: {e}")
+        
+        logger.info("Cleanup completed")
 
     def get_mainloop(self):
         global mainloop
@@ -93,17 +129,9 @@ class GattApplication(dbus.service.Object):
     def stop_advertising(self):
         if self.advertisement and self.is_advertising:
             try:
-                from rpi_ble.utils import find_adapter
-                from rpi_ble.constants import BLUEZ_SERVICE_NAME, LE_ADVERTISING_MANAGER_IFACE
-                adapter = find_adapter(self.bus)
-                if adapter:
-                    ad_manager = dbus.Interface(
-                        self.bus.get_object(BLUEZ_SERVICE_NAME, adapter),
-                        LE_ADVERTISING_MANAGER_IFACE
-                    )
-                    ad_manager.UnregisterAdvertisement(self.advertisement.get_path())
-                    self.is_advertising = False
-                    logger.info("BLE advertising stopped")
+                self.advertisement.unregister()
+                self.is_advertising = False
+                logger.info("BLE advertising stopped")
             except Exception as e:
                 logger.error(f"Failed to stop advertising: {e}")
 

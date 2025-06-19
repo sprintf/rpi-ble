@@ -58,6 +58,10 @@ def main():
     except KeyboardInterrupt:
         logger.info("Shutting down due to CTRL-C")
 
+    # Clean up BlueZ and D-Bus resources
+    logger.info("Cleaning up BlueZ and D-Bus resources")
+    app.cleanup()
+
     # tell everything we're shutting down
     logger.info("sending shutdown notification")
     ExitApplicationEvent.emit()
