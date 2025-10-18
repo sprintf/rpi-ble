@@ -1,6 +1,7 @@
 from json import JSONEncoder
 from tokenize import String
 import logging
+import threading
 
 from gi.repository import GLib
 
@@ -19,12 +20,13 @@ class GpsGattService(GattService, GpsReceiver):
     Send gps data on a frequent basis
     """
 
-    def __init__(self, bus, index):
+    def __init__(self, bus, index, test_mode=False):
         GattService.__init__(self, bus, index, GPS_SERVICE_UUID, True)
         self.gps_characteristic = GpsChrc(bus, 0, self)
         self.add_characteristic(self.gps_characteristic)
         self.gps_thread = None
         self.gps_connected = False
+        self.test_mode = test_mode
 
     def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float,
                          speed: int, gdop: float, pdop: float) -> None:
@@ -54,21 +56,21 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
         self.add_descriptor(GpsDescriptor(bus, 0, self))
         self.add_descriptor(NotifyDescriptor(bus, 1, self))
         self.notifying = False
+        self.lock = threading.Lock()
         self.gps_pos = GpsPos(0, 0, 0, 0, 0, 0, 0)
         self.service = service
 
     def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float, speed: int, gdop: float, pdop: float):
-        self.gps_pos = GpsPos(lat, long, heading, tstamp, speed, gdop, pdop)
-        value = self.ReadValue(None)
-
-        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
-
+        with self.lock:
+            self.gps_pos = GpsPos(lat, long, heading, tstamp, speed, gdop, pdop)
+            value = self.ReadValue(None)
+            self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return self.notifying
 
     def StartNotify(self):
         logger.info("StartNotify called")
         if self.notifying:
-            print('Already notifying, nothing to do')
+            logger.info('Already notifying, nothing to do')
             return
         else:
             self.service.start_gps_thread()
@@ -78,17 +80,18 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
     def StopNotify(self):
         logger.info("StopNotify called")
         if not self.notifying:
-            print('Not notifying, nothing to do')
+            logger.info('Not notifying, nothing to do')
             return
 
         self.notifying = False
 
     def ReadValue(self, options):
-        value = []
-        gps_str = self.gps_pos.toJSON()
-        for c in gps_str:
-            value.append(dbus.Byte(c.encode()))
-        return value
+        with self.lock:
+            value = []
+            gps_str = self.gps_pos.toJSON()
+            for c in gps_str:
+                value.append(dbus.Byte(c.encode()))
+            return value
 
 class GpsPos:
 
@@ -141,4 +144,9 @@ class GpsDescriptor(Descriptor):
         return value
 
 def run_gps_thread(service: GpsGattService):
-    GpsReader(service).run()
+    if service.test_mode:
+        from rpi_ble.synthetic_gps_reader import SyntheticGpsReader
+        logger.info("Starting synthetic GPS reader thread")
+        SyntheticGpsReader(service).run()
+    else:
+        GpsReader(service).run()

@@ -25,7 +25,7 @@ class ObdReader(Thread):
     }
 
     def __init__(self, receiver: ObdReceiver):
-        Thread.__init__(self)
+        Thread.__init__(self, daemon=True)
         self.receiver = receiver
         self.working = False
         self.temp_f = 0

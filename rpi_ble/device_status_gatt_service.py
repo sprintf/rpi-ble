@@ -47,23 +47,20 @@ class ObdConnectedChrc(GattCharacteristic, EventHandler):
 
     def StartNotify(self):
         if self.notifying:
-            print('Already notifying, nothing to do')
+            logger.info('Already notifying, nothing to do')
             return
 
         self.notifying = True
 
     def StopNotify(self):
         if not self.notifying:
-            print('Not notifying, nothing to do')
+            logger.info('Not notifying, nothing to do')
             return
 
         self.notifying = False
 
     def ReadValue(self, options):
-        value = []
-        connected = chr(int(self.obd_connected))
-        value.append(dbus.Byte(connected.encode()))
-        return value
+        return [dbus.Byte(1 if self.obd_connected else 0)]
 
 class GpsConnectedChrc(GattCharacteristic, EventHandler):
 
@@ -93,7 +90,7 @@ class GpsConnectedChrc(GattCharacteristic, EventHandler):
     def StartNotify(self):
         logger.info("StartNotify called")
         if self.notifying:
-            print('Already notifying, nothing to do')
+            logger.info('Already notifying, nothing to do')
             return
 
         self.notifying = True
@@ -101,16 +98,13 @@ class GpsConnectedChrc(GattCharacteristic, EventHandler):
     def StopNotify(self):
         logger.info("StopNotify called")
         if not self.notifying:
-            print('Not notifying, nothing to do')
+            logger.info('Not notifying, nothing to do')
             return
 
         self.notifying = False
 
     def ReadValue(self, options):
-        value = []
-        connected = chr(int(self.gps_connected))
-        value.append(dbus.Byte(connected.encode()))
-        return value
+        return [dbus.Byte(1 if self.gps_connected else 0)]
 
 class ObdConnectedDescriptor(Descriptor):
     OBD_CONNECTED_DESCRIPTOR_VALUE = "OBD Connection Status"

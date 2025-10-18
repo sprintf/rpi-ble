@@ -39,6 +39,7 @@ class GpsReader(Thread):
 
     def run(self) -> None:
         while not self.finished:
+            session = None
             try:
                 logger.info("connecting to GPS...")
                 self.call_gpsctl()
@@ -105,7 +106,7 @@ class GpsReader(Thread):
                                     except Exception:
                                         logger.exception("issue with GPS listener.")
                                     finally:
-                                        elapsed_ms = int(time.time() - start_time * 1000)
+                                        elapsed_ms = int((time.time() - start_time) * 1000)
                                         if elapsed_ms > 50:
                                             logger.warning(f"position handling took {elapsed_ms} ms")
                                 if not self.working:
@@ -119,6 +120,12 @@ class GpsReader(Thread):
                 self.working = False
                 GPSDisconnectedEvent.emit()
                 time.sleep(10)
+            finally:
+                if session:
+                    try:
+                        session.close()
+                    except Exception:
+                        logger.debug("Error closing GPS session")
 
     def is_working(self) -> bool:
         return self.working
@@ -140,8 +147,11 @@ class GpsReader(Thread):
         session.send('?WATCH={"enable":true,"json":true}')
 
     def call_gpsctl(self):
-        if True: # not settings.GPSCTL_ARGS:
-            return
+        # TODO: Enable this if you need to configure specific GPS hardware
+        # Set GPSCTL_ARGS in environment or settings to use
+        return  # Currently disabled
+
+        # Uncomment below to enable gpsctl functionality:
         # args = settings.GPSCTL_ARGS.split(" ")
         if UsbDetector.detected(UsbDevice.GPS):
             gps_device = UsbDetector.get(UsbDevice.GPS)

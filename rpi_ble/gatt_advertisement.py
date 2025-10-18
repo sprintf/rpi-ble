@@ -2,10 +2,13 @@
 
 import dbus
 import dbus.service
+import logging
 
 from rpi_ble.constants import LE_ADVERTISEMENT_IFACE, DBUS_PROP_IFACE, BLUEZ_SERVICE_NAME, LE_ADVERTISING_MANAGER_IFACE
 from rpi_ble.utils import find_adapter
 from rpi_ble.service import InvalidArgsException
+
+logger = logging.getLogger(__name__)
 
 
 class GattAdvertisement(dbus.service.Object):
@@ -92,13 +95,13 @@ class GattAdvertisement(dbus.service.Object):
                          in_signature='',
                          out_signature='')
     def Release(self):
-        print ('%s: Released!' % self.path)
+        logger.info('%s: Released!', self.path)
 
     def register_ad_callback(self):
-        print("GATT advertisement registered")
+        logger.info("GATT advertisement registered")
 
     def register_ad_error_callback(self):
-        print("Failed to register GATT advertisement")
+        logger.error("Failed to register GATT advertisement")
 
     def register(self, bus):
         adapter = find_adapter(bus)
@@ -119,6 +122,6 @@ class GattAdvertisement(dbus.service.Object):
                     self.bus.get_object(BLUEZ_SERVICE_NAME, self.adapter),
                     LE_ADVERTISING_MANAGER_IFACE)
                 ad_manager.UnregisterAdvertisement(self.get_path())
-                print("Advertisement unregistered")
+                logger.info("Advertisement unregistered")
             except Exception as e:
-                print(f"Failed to unregister advertisement: {e}")
+                logger.error("Failed to unregister advertisement: %s", e)

@@ -22,20 +22,21 @@ class LemonPiAdvertisement(GattAdvertisement):
         self.include_tx_power = True
 
 class GattApplication(dbus.service.Object):
-    def __init__(self, bus):
+    def __init__(self, bus, test_mode=False):
         self.path = '/'
         self.services = []
         self.bus = bus
         self.connected_devices = set()
         self.advertisement = None
         self.is_advertising = False
-        
+        self.test_mode = test_mode
+
         dbus.service.Object.__init__(self, bus, self.path)
         from rpi_ble.device_status_gatt_service import DeviceStatusGattService
         from rpi_ble.gps_gatt_service import GpsGattService
         from rpi_ble.obd_gatt_service import ObdGattService
-        self.gps_service = GpsGattService(bus, 0)
-        self.obd_service = ObdGattService(bus, 1)
+        self.gps_service = GpsGattService(bus, 0, test_mode=test_mode)
+        self.obd_service = ObdGattService(bus, 1, test_mode=test_mode)
         self.add_service(self.gps_service)
         self.add_service(self.obd_service)
         self.add_service(DeviceStatusGattService(bus, 2))
