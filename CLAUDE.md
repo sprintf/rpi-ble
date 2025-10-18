@@ -15,13 +15,27 @@ export PYTHONPATH=.
 ```
 
 ### Running the Application
+
+Normal mode (requires physical GPS and OBD-II hardware):
 ```bash
 python rpi_ble/main.py
 ```
 
+Test mode (uses synthetic data, no hardware required):
+```bash
+python rpi_ble/main.py --test-mode
+```
+
+See [TEST_MODE.md](TEST_MODE.md) for detailed information about test mode.
+
 ### Running Tests
 ```bash
 python -m unittest discover rpi_ble/test
+```
+
+Test synthetic readers independently:
+```bash
+python test_synthetic.py
 ```
 
 ## Architecture

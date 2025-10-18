@@ -3,9 +3,12 @@ import dbus
 import dbus.exceptions
 import dbus.mainloop.glib
 import dbus.service
+import logging
 
 from rpi_ble.constants import GATT_SERVICE_IFACE, DBUS_PROP_IFACE, GATT_CHRC_IFACE, GATT_DESC_IFACE, \
     NOTIFY_DESCRIPTOR_UUID
+
+logger = logging.getLogger(__name__)
 
 
 class InvalidArgsException(dbus.exceptions.DBusException):
@@ -123,22 +126,22 @@ class GattCharacteristic(dbus.service.Object):
                         in_signature='a{sv}',
                         out_signature='ay')
     def ReadValue(self, options):
-        print('Default ReadValue called, returning error')
+        logger.warning('Default ReadValue called, returning error')
         raise NotSupportedException()
 
     @dbus.service.method(GATT_CHRC_IFACE, in_signature='aya{sv}')
     def WriteValue(self, value, options):
-        print('Default WriteValue called, returning error')
+        logger.warning('Default WriteValue called, returning error')
         raise NotSupportedException()
 
     @dbus.service.method(GATT_CHRC_IFACE)
     def StartNotify(self):
-        print('Default StartNotify called, returning error')
+        logger.warning('Default StartNotify called, returning error')
         raise NotSupportedException()
 
     @dbus.service.method(GATT_CHRC_IFACE)
     def StopNotify(self):
-        print('Default StopNotify called, returning error')
+        logger.warning('Default StopNotify called, returning error')
         raise NotSupportedException()
 
     @dbus.service.signal(DBUS_PROP_IFACE,
@@ -183,12 +186,12 @@ class Descriptor(dbus.service.Object):
                         in_signature='a{sv}',
                         out_signature='ay')
     def ReadValue(self, options):
-        print ('Default ReadValue called, returning error')
+        logger.warning('Default ReadValue called, returning error')
         raise NotSupportedException()
 
     @dbus.service.method(GATT_DESC_IFACE, in_signature='aya{sv}')
     def WriteValue(self, value, options):
-        print('Default WriteValue called, returning error')
+        logger.warning('Default WriteValue called, returning error')
         raise NotSupportedException()
 
 class NotifyDescriptor(Descriptor):
