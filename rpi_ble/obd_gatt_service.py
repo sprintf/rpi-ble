@@ -61,8 +61,7 @@ class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
     def set_temp_f(self, temperature: int):
         with self.lock:
             self.temp_f = temperature
-            value = []
-            value.append(dbus.Int32(self.temp_f))
+            value = self.ReadValue(None)
             self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return self.notifying
 
@@ -87,9 +86,7 @@ class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
     def ReadValue(self, options):
         with self.lock:
             value = []
-            strtemp = str(self.temp_f)
-            for c in strtemp:
-                value.append(dbus.Byte(c.encode()))
+            value.append(dbus.Int32(self.temp_f))
             return value
 
 class FuelLevelObdChrc(GattCharacteristic, FuelLevelReceiver):
@@ -133,9 +130,7 @@ class FuelLevelObdChrc(GattCharacteristic, FuelLevelReceiver):
     def ReadValue(self, options):
         with self.lock:
             value = []
-            strtemp = str(self.fuel_level)
-            for c in strtemp:
-                value.append(dbus.Byte(c.encode()))
+            value.append(dbus.Int32(self.fuel_level))
             return value
 
 class EngineTempObdDescriptor(Descriptor):

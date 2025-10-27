@@ -100,8 +100,8 @@ class GattAdvertisement(dbus.service.Object):
     def register_ad_callback(self):
         logger.info("GATT advertisement registered")
 
-    def register_ad_error_callback(self):
-        logger.error("Failed to register GATT advertisement")
+    def register_ad_error_callback(self, exception):
+        logger.error("Failed to register GATT advertisement : {exception}")
 
     def register(self, bus):
         adapter = find_adapter(bus)
