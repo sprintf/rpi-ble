@@ -1,6 +1,8 @@
 import dbus
 import logging
 
+from gi.repository import GLib
+
 from rpi_ble.constants import DEVICE_STATUS_SERVICE_UUID, OBD_CONNECTED_CHRC_UUID, GPS_CONNECTED_CHRC_UUID, \
     OBD_CONNECTED_DESCRIPTOR_UUID, GPS_CONNECTED_DESCRIPTOR_UUID
 from rpi_ble.event_defs import OBDConnectedEvent, OBDDisconnectedEvent, GPSDisconnectedEvent, GPSConnectedEvent
@@ -42,8 +44,13 @@ class ObdConnectedChrc(GattCharacteristic, EventHandler):
             self.obd_connected = False
         else:
             logger.warning("unknown event")
+        # Schedule D-Bus call on main thread to avoid blocking
+        GLib.idle_add(self._notify_property_changed)
+
+    def _notify_property_changed(self):
         value = self.ReadValue(None)
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+        return False  # Don't repeat this idle callback
 
     def StartNotify(self):
         if self.notifying:
@@ -84,8 +91,13 @@ class GpsConnectedChrc(GattCharacteristic, EventHandler):
             self.gps_connected = False
         else:
             logger.warning("unknown event")
+        # Schedule D-Bus call on main thread to avoid blocking
+        GLib.idle_add(self._notify_property_changed)
+
+    def _notify_property_changed(self):
         value = self.ReadValue(None)
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+        return False  # Don't repeat this idle callback
 
     def StartNotify(self):
         logger.info("StartNotify called")
