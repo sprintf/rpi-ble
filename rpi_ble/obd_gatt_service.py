@@ -61,9 +61,15 @@ class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
     def set_temp_f(self, temperature: int):
         with self.lock:
             self.temp_f = temperature
+            # Schedule D-Bus call on main thread to avoid blocking
+            GLib.idle_add(self._notify_property_changed)
+        return self.notifying
+
+    def _notify_property_changed(self):
+        with self.lock:
             value = self.ReadValue(None)
             self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
-        return self.notifying
+        return False  # Don't repeat this idle callback
 
     def StartNotify(self):
         logger.info("StartNotify called")
@@ -107,9 +113,15 @@ class FuelLevelObdChrc(GattCharacteristic, FuelLevelReceiver):
     def set_fuel_percent_remaining(self, percent: int):
         with self.lock:
             self.fuel_level = percent
+            # Schedule D-Bus call on main thread to avoid blocking
+            GLib.idle_add(self._notify_property_changed)
+        return self.notifying
+
+    def _notify_property_changed(self):
+        with self.lock:
             value = self.ReadValue(None)
             self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
-        return self.notifying
+        return False  # Don't repeat this idle callback
 
     def StartNotify(self):
         if self.notifying:

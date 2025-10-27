@@ -63,9 +63,15 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
     def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float, speed: int, gdop: float, pdop: float):
         with self.lock:
             self.gps_pos = GpsPos(lat, long, heading, tstamp, speed, gdop, pdop)
+            # Schedule D-Bus call on main thread to avoid blocking
+            GLib.idle_add(self._notify_property_changed)
+        return self.notifying
+
+    def _notify_property_changed(self):
+        with self.lock:
             value = self.ReadValue(None)
             self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
-        return self.notifying
+        return False  # Don't repeat this idle callback
 
     def StartNotify(self):
         logger.info("StartNotify called")

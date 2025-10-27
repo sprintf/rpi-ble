@@ -6,6 +6,8 @@ import dbus.service
 import logging
 import time
 import argparse
+import faulthandler
+import signal
 
 from rpi_ble.event_defs import ExitApplicationEvent
 from rpi_ble.obd_reader import ObdReader
@@ -29,6 +31,11 @@ def main():
     parser.add_argument('--test-mode', action='store_true',
                         help='Run with synthetic GPS and OBD data for testing')
     args = parser.parse_args()
+
+    # Enable faulthandler for debugging - send SIGUSR1 to dump all thread stacks
+    faulthandler.enable()
+    faulthandler.register(signal.SIGUSR1)
+    logger.info("Thread dump enabled - send SIGUSR1 to process for stack traces")
 
     if args.test_mode:
         logger.info("*** RUNNING IN TEST MODE WITH SYNTHETIC DATA ***")
