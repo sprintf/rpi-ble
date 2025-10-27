@@ -34,6 +34,7 @@ class ObdConnectedChrc(GattCharacteristic, EventHandler):
         self.add_descriptor(NotifyDescriptor(bus, 1, self))
         self.notifying = False
         self.obd_connected: bool = False
+        self.update_pending = False
         OBDConnectedEvent.register_handler(self)
         OBDDisconnectedEvent.register_handler(self)
 
@@ -45,11 +46,15 @@ class ObdConnectedChrc(GattCharacteristic, EventHandler):
         else:
             logger.warning("unknown event")
         # Schedule D-Bus call on main thread to avoid blocking
-        GLib.idle_add(self._notify_property_changed)
+        # Only schedule if no update is already pending
+        if not self.update_pending:
+            self.update_pending = True
+            GLib.idle_add(self._notify_property_changed)
 
     def _notify_property_changed(self):
         value = self.ReadValue(None)
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+        self.update_pending = False
         return False  # Don't repeat this idle callback
 
     def StartNotify(self):
@@ -81,6 +86,7 @@ class GpsConnectedChrc(GattCharacteristic, EventHandler):
         self.add_descriptor(NotifyDescriptor(bus, 1, self))
         self.notifying = False
         self.gps_connected: bool = False
+        self.update_pending = False
         GPSConnectedEvent.register_handler(self)
         GPSDisconnectedEvent.register_handler(self)
 
@@ -92,11 +98,15 @@ class GpsConnectedChrc(GattCharacteristic, EventHandler):
         else:
             logger.warning("unknown event")
         # Schedule D-Bus call on main thread to avoid blocking
-        GLib.idle_add(self._notify_property_changed)
+        # Only schedule if no update is already pending
+        if not self.update_pending:
+            self.update_pending = True
+            GLib.idle_add(self._notify_property_changed)
 
     def _notify_property_changed(self):
         value = self.ReadValue(None)
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+        self.update_pending = False
         return False  # Don't repeat this idle callback
 
     def StartNotify(self):

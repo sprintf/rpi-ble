@@ -59,18 +59,22 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
         self.lock = threading.Lock()
         self.gps_pos = GpsPos(0, 0, 0, 0, 0, 0, 0)
         self.service = service
+        self.update_pending = False
 
     def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float, speed: int, gdop: float, pdop: float):
         with self.lock:
             self.gps_pos = GpsPos(lat, long, heading, tstamp, speed, gdop, pdop)
-            # Schedule D-Bus call on main thread to avoid blocking
-            GLib.idle_add(self._notify_property_changed)
+            # Only schedule if no update is already pending
+            if not self.update_pending:
+                self.update_pending = True
+                GLib.idle_add(self._notify_property_changed)
         return self.notifying
 
     def _notify_property_changed(self):
         with self.lock:
             value = self.ReadValue(None)
-            self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+            self.update_pending = False
+        self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return False  # Don't repeat this idle callback
 
     def StartNotify(self):
