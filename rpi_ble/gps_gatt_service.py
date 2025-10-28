@@ -71,14 +71,9 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
         return self.notifying
 
     def _notify_property_changed(self):
-        logger.info("Executing GPS property change notification")
-        logger.info("doing it")
         value = self.ReadValue(None)
-        logger.info("read value")
         self.update_pending = False
-        logger.info("calling props changed")
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
-        logger.info("and ... done!")
         return False  # Don't repeat this idle callback
 
     def StartNotify(self):

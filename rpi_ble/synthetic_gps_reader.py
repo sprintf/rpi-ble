@@ -76,7 +76,7 @@ class SyntheticGpsReader(Thread):
                            f"heading={heading}, speed={speed}mph")
 
                 # Update once per second
-                time.sleep(1.0)
+                time.sleep(0.05)
 
             except Exception:
                 logger.exception("Error in synthetic GPS reader")

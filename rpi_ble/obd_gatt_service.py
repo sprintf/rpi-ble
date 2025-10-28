@@ -1,11 +1,10 @@
 import dbus
 import logging
-import threading
 
 from gi.repository import GLib
 
 from rpi_ble.constants import OBD_SERVICE_UUID, ENGINE_TEMP_CHRC_UUID, FUEL_LEVEL_CHRC_UUID
-from rpi_ble.interfaces import TemperatureReceiver, FuelLevelReceiver, FuelLevelReceiver
+from rpi_ble.interfaces import TemperatureReceiver, FuelLevelReceiver
 from rpi_ble.obd_reader import ObdReader
 from rpi_ble.service import GattService, GattCharacteristic, GATT_CHRC_IFACE, Descriptor, NotifyDescriptor
 
@@ -68,8 +67,6 @@ class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
         return self.notifying
 
     def _notify_property_changed(self):
-        logger.info("Executing engine temperature property change notification")
-        logger.info("doing it")
         value = self.ReadValue(None)
         self.update_pending = False
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
@@ -109,7 +106,6 @@ class FuelLevelObdChrc(GattCharacteristic, FuelLevelReceiver):
         self.add_descriptor(FuelLevelObdDescriptor(bus, 0, self))
         self.add_descriptor(NotifyDescriptor(bus, 1, self))
         self.notifying = False
-        # self.lock = threading.Lock()
         self.fuel_level = 0
         self.service = service
         self.update_pending = False
@@ -119,13 +115,10 @@ class FuelLevelObdChrc(GattCharacteristic, FuelLevelReceiver):
         # Only schedule if no update is already pending
         if not self.update_pending:
             self.update_pending = True
-            logger.debug("Queueing fuel level property change notification to GLib main loop")
             GLib.idle_add(self._notify_property_changed)
         return self.notifying
 
     def _notify_property_changed(self):
-        logger.info("Executing fuel level property change notification")
-        logger.info("doing it")
         value = self.ReadValue(None)
         self.update_pending = False
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
