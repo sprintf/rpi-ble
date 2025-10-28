@@ -67,11 +67,14 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
             # Only schedule if no update is already pending
             if not self.update_pending:
                 self.update_pending = True
+                logger.debug("Queueing GPS property change notification to GLib main loop")
                 GLib.idle_add(self._notify_property_changed)
         return self.notifying
 
     def _notify_property_changed(self):
+        logger.info("Executing GPS property change notification")
         with self.lock:
+            logger.info("doing it")
             value = self.ReadValue(None)
             self.update_pending = False
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])

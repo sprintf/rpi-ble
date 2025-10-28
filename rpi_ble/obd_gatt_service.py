@@ -65,11 +65,14 @@ class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
             # Only schedule if no update is already pending
             if not self.update_pending:
                 self.update_pending = True
+                logger.debug("Queueing engine temperature property change notification to GLib main loop")
                 GLib.idle_add(self._notify_property_changed)
         return self.notifying
 
     def _notify_property_changed(self):
+        logger.info("Executing engine temperature property change notification")
         with self.lock:
+            logger.info("doing it")
             value = self.ReadValue(None)
             self.update_pending = False
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
@@ -121,11 +124,14 @@ class FuelLevelObdChrc(GattCharacteristic, FuelLevelReceiver):
             # Only schedule if no update is already pending
             if not self.update_pending:
                 self.update_pending = True
+                logger.debug("Queueing fuel level property change notification to GLib main loop")
                 GLib.idle_add(self._notify_property_changed)
         return self.notifying
 
     def _notify_property_changed(self):
+        logger.info("Executing fuel level property change notification")
         with self.lock:
+            logger.info("doing it")
             value = self.ReadValue(None)
             self.update_pending = False
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
