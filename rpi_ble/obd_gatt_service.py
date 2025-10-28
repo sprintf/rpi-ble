@@ -54,27 +54,24 @@ class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
         self.add_descriptor(EngineTempObdDescriptor(bus, 0, self))
         self.add_descriptor(NotifyDescriptor(bus, 1, self))
         self.notifying = False
-        self.lock = threading.Lock()
         self.temp_f = 0
         self.service = service
         self.update_pending = False
 
     def set_temp_f(self, temperature: int):
-        with self.lock:
-            self.temp_f = temperature
-            # Only schedule if no update is already pending
-            if not self.update_pending:
-                self.update_pending = True
-                logger.debug("Queueing engine temperature property change notification to GLib main loop")
-                GLib.idle_add(self._notify_property_changed)
+        self.temp_f = temperature
+        # Only schedule if no update is already pending
+        if not self.update_pending:
+            self.update_pending = True
+            logger.debug("Queueing engine temperature property change notification to GLib main loop")
+            GLib.idle_add(self._notify_property_changed)
         return self.notifying
 
     def _notify_property_changed(self):
         logger.info("Executing engine temperature property change notification")
-        with self.lock:
-            logger.info("doing it")
-            value = self.ReadValue(None)
-            self.update_pending = False
+        logger.info("doing it")
+        value = self.ReadValue(None)
+        self.update_pending = False
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return False  # Don't repeat this idle callback
 
@@ -97,10 +94,9 @@ class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
         self.notifying = False
 
     def ReadValue(self, options):
-        with self.lock:
-            value = []
-            value.append(dbus.Int32(self.temp_f))
-            return value
+        value = []
+        value.append(dbus.Int32(self.temp_f))
+        return value
 
 class FuelLevelObdChrc(GattCharacteristic, FuelLevelReceiver):
 
@@ -113,27 +109,25 @@ class FuelLevelObdChrc(GattCharacteristic, FuelLevelReceiver):
         self.add_descriptor(FuelLevelObdDescriptor(bus, 0, self))
         self.add_descriptor(NotifyDescriptor(bus, 1, self))
         self.notifying = False
-        self.lock = threading.Lock()
+        # self.lock = threading.Lock()
         self.fuel_level = 0
         self.service = service
         self.update_pending = False
 
     def set_fuel_percent_remaining(self, percent: int):
-        with self.lock:
-            self.fuel_level = percent
-            # Only schedule if no update is already pending
-            if not self.update_pending:
-                self.update_pending = True
-                logger.debug("Queueing fuel level property change notification to GLib main loop")
-                GLib.idle_add(self._notify_property_changed)
+        self.fuel_level = percent
+        # Only schedule if no update is already pending
+        if not self.update_pending:
+            self.update_pending = True
+            logger.debug("Queueing fuel level property change notification to GLib main loop")
+            GLib.idle_add(self._notify_property_changed)
         return self.notifying
 
     def _notify_property_changed(self):
         logger.info("Executing fuel level property change notification")
-        with self.lock:
-            logger.info("doing it")
-            value = self.ReadValue(None)
-            self.update_pending = False
+        logger.info("doing it")
+        value = self.ReadValue(None)
+        self.update_pending = False
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return False  # Don't repeat this idle callback
 
@@ -154,10 +148,9 @@ class FuelLevelObdChrc(GattCharacteristic, FuelLevelReceiver):
         self.notifying = False
 
     def ReadValue(self, options):
-        with self.lock:
-            value = []
-            value.append(dbus.Int32(self.fuel_level))
-            return value
+        value = []
+        value.append(dbus.Int32(self.fuel_level))
+        return value
 
 class EngineTempObdDescriptor(Descriptor):
     TEMP_DESCRIPTOR_UUID = "2901"
