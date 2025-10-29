@@ -49,9 +49,11 @@ class ObdConnectedChrc(GattCharacteristic, EventHandler):
         # Only schedule if no update is already pending
         if not self.update_pending:
             self.update_pending = True
+            logger.debug("Queueing OBD connection status property change notification to GLib main loop")
             GLib.idle_add(self._notify_property_changed)
 
     def _notify_property_changed(self):
+        logger.info("Executing OBD connection status property change notification")
         value = self.ReadValue(None)
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         self.update_pending = False
@@ -101,9 +103,11 @@ class GpsConnectedChrc(GattCharacteristic, EventHandler):
         # Only schedule if no update is already pending
         if not self.update_pending:
             self.update_pending = True
+            logger.debug("Queueing GPS connection status property change notification to GLib main loop")
             GLib.idle_add(self._notify_property_changed)
 
     def _notify_property_changed(self):
+        logger.info("Executing GPS connection status property change notification")
         value = self.ReadValue(None)
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         self.update_pending = False

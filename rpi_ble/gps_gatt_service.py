@@ -56,24 +56,22 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
         self.add_descriptor(GpsDescriptor(bus, 0, self))
         self.add_descriptor(NotifyDescriptor(bus, 1, self))
         self.notifying = False
-        self.lock = threading.Lock()
+        # self.lock = threading.Lock()
         self.gps_pos = GpsPos(0, 0, 0, 0, 0, 0, 0)
         self.service = service
         self.update_pending = False
 
     def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float, speed: int, gdop: float, pdop: float):
-        with self.lock:
-            self.gps_pos = GpsPos(lat, long, heading, tstamp, speed, gdop, pdop)
-            # Only schedule if no update is already pending
-            if not self.update_pending:
-                self.update_pending = True
-                GLib.idle_add(self._notify_property_changed)
+        self.gps_pos = GpsPos(lat, long, heading, tstamp, speed, gdop, pdop)
+        # Only schedule if no update is already pending
+        if not self.update_pending:
+            self.update_pending = True
+            logger.debug("Queueing GPS property change notification to GLib main loop")
+            GLib.idle_add(self._notify_property_changed, self.ReadValue(None))
         return self.notifying
 
-    def _notify_property_changed(self):
-        with self.lock:
-            value = self.ReadValue(None)
-            self.update_pending = False
+    def _notify_property_changed(self, value):
+        self.update_pending = False
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return False  # Don't repeat this idle callback
 
@@ -96,12 +94,11 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
         self.notifying = False
 
     def ReadValue(self, options):
-        with self.lock:
-            value = []
-            gps_str = self.gps_pos.toJSON()
-            for c in gps_str:
-                value.append(dbus.Byte(c.encode()))
-            return value
+        value = []
+        gps_str = self.gps_pos.toJSON()
+        for c in gps_str:
+            value.append(dbus.Byte(c.encode()))
+        return value
 
 class GpsPos:
 
