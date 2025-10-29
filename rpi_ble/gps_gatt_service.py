@@ -67,11 +67,10 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
         if not self.update_pending:
             self.update_pending = True
             logger.debug("Queueing GPS property change notification to GLib main loop")
-            GLib.idle_add(self._notify_property_changed)
+            GLib.idle_add(self._notify_property_changed, self.ReadValue(None))
         return self.notifying
 
-    def _notify_property_changed(self):
-        value = self.ReadValue(None)
+    def _notify_property_changed(self, value):
         self.update_pending = False
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
         return False  # Don't repeat this idle callback
