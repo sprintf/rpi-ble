@@ -74,7 +74,7 @@ class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
     def StartNotify(self):
         logger.info("StartNotify called")
         if self.notifying:
-            print('Already notifying, nothing to do')
+            logger.debug('Already notifying, nothing to do')
             return
         else:
             self.service.start_obd_thread()
@@ -84,7 +84,7 @@ class EngineTempObdChrc(GattCharacteristic, TemperatureReceiver):
     def StopNotify(self):
         logger.info("StopNotify called")
         if not self.notifying:
-            print('Not notifying, nothing to do')
+            logger.debug('Not notifying, nothing to do')
             return
 
         self.notifying = False

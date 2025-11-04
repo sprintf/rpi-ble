@@ -2,6 +2,7 @@ from json import JSONEncoder
 from tokenize import String
 import logging
 import threading
+import time
 
 from gi.repository import GLib
 
@@ -60,6 +61,10 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
         self.gps_pos = GpsPos(0, 0, 0, 0, 0, 0, 0)
         self.service = service
         self.update_pending = False
+        # Telemetry for monitoring BLE send rates
+        self.ble_notifications_sent = 0
+        self.ble_updates_dropped = 0
+        self.last_telemetry_time = time.time()
 
     def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float, speed: int, gdop: float, pdop: float):
         self.gps_pos = GpsPos(lat, long, heading, tstamp, speed, gdop, pdop)
@@ -68,11 +73,31 @@ class GpsChrc(GattCharacteristic, GpsReceiver):
             self.update_pending = True
             logger.debug("Queueing GPS property change notification to GLib main loop")
             GLib.idle_add(self._notify_property_changed, self.ReadValue(None))
+        else:
+            # Track dropped updates for telemetry
+            self.ble_updates_dropped += 1
         return self.notifying
 
     def _notify_property_changed(self, value):
         self.update_pending = False
         self.PropertiesChanged(GATT_CHRC_IFACE, {'Value': value}, [])
+
+        # Track BLE notifications sent for telemetry
+        self.ble_notifications_sent += 1
+
+        # Log telemetry every 60 seconds
+        current_time = time.time()
+        if current_time - self.last_telemetry_time >= 60.0:
+            elapsed = current_time - self.last_telemetry_time
+            ble_send_rate = self.ble_notifications_sent / elapsed
+            drop_rate = self.ble_updates_dropped / elapsed
+            logger.info(f"BLE Telemetry: sent {ble_send_rate:.1f} notifications/sec, "
+                       f"dropped {drop_rate:.1f} updates/sec")
+            # Reset counters
+            self.ble_notifications_sent = 0
+            self.ble_updates_dropped = 0
+            self.last_telemetry_time = current_time
+
         return False  # Don't repeat this idle callback
 
     def StartNotify(self):
