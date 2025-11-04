@@ -31,6 +31,9 @@ class GpsReader(Thread):
         self.finished = False
         self.time_synced = False
         self.receiver = receiver
+        # Telemetry for monitoring GPS data rates
+        self.gps_updates_received = 0
+        self.last_telemetry_time = time.time()
         ExitApplicationEvent.register_handler(self)
 
     def handle_event(self, event, **kwargs):
@@ -94,6 +97,20 @@ class GpsReader(Thread):
                             if not math.isnan(session.fix.latitude):
                                 self.lat = session.fix.latitude
                                 self.long = session.fix.longitude
+
+                                # Count GPS updates received for telemetry
+                                self.gps_updates_received += 1
+
+                                # Log telemetry every 60 seconds
+                                current_time = time.time()
+                                if current_time - self.last_telemetry_time >= 60.0:
+                                    elapsed = current_time - self.last_telemetry_time
+                                    gps_rate = self.gps_updates_received / elapsed
+                                    logger.info(f"GPS Telemetry: received {gps_rate:.1f} updates/sec")
+                                    # Reset counters
+                                    self.gps_updates_received = 0
+                                    self.last_telemetry_time = current_time
+
                                 # generally we should try to move away from position listeners, and instead
                                 # have them pull from this class when they need it
                                 if self.receiver:
@@ -185,7 +202,7 @@ if __name__ == "__main__":
 
         def set_gps_position(self, lat: float, long: float, heading: float, tstamp: float, speed: int) -> None:
             diff = int((time.time() - tstamp) * 1000)
-            print(f"diff between now and gps time = {diff}ms")
+            logger.debug(f"diff between now and gps time = {diff}ms")
             #self.file.write("{},{},{},{},{}\n".format(tstamp, lat, long, heading, speed))
             #self.file.flush()
 

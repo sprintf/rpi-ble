@@ -132,4 +132,4 @@ if __name__ == "__main__":
                         level=logging.DEBUG)
 
     UsbDetector.init()
-    print(UsbDetector.get_instance().usb_map)
+    logger.debug(UsbDetector.get_instance().usb_map)

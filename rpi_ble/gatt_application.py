@@ -54,7 +54,7 @@ class GattApplication(dbus.service.Object):
     def register_application(self, bus):
         adapter = find_adapter(bus)
         if not adapter:
-            print('GattManager1 interface not found')
+            logger.error('GattManager1 interface not found')
             return
 
         self.adapter_path = adapter
@@ -177,10 +177,10 @@ class GattApplication(dbus.service.Object):
         return response
 
 def register_app_cb():
-    print('GATT application registered')
+    logger.info('GATT application registered')
 
 def register_app_error_cb(error):
-    print(f'Failed to register application: {error}')
+    logger.error(f'Failed to register application: {error}')
     mainloop.quit()
 
 
