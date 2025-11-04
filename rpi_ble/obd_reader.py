@@ -89,6 +89,15 @@ class ObdReader(Thread):
                     #     del ObdReader.refresh_rate[dead_key]
                     #     logger.info(f"removed {dead_key}")
 
+                # If we exited the loop due to car disconnection (not application exit)
+                if not self.finished and connection.status() != obd.OBDStatus.CAR_CONNECTED:
+                    logger.info("Car disconnected, connection status changed to: %s", connection.status())
+                    self.working = False
+                    OBDDisconnectedEvent.emit()
+                    connection.close()
+                    connection = None
+                    time.sleep(30)  # Wait before attempting reconnection
+
             except Exception as e:
                 logger.exception("bad stuff in OBD land %s", e)
                 if connection:

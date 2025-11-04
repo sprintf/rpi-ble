@@ -4,18 +4,57 @@ import dbus.exceptions
 import dbus.mainloop.glib
 import dbus.service
 import logging
+from logging.handlers import RotatingFileHandler
 import time
 import argparse
+import os
 
 from rpi_ble.event_defs import ExitApplicationEvent
 from rpi_ble.usb_detector import UsbDetector, UsbDevice
 
 from rpi_ble.gatt_application import GattApplication, LemonPiAdvertisement
 
+# Create logs directory if it doesn't exist
+os.makedirs('logs', exist_ok=True)
+
+
+class FlushingRotatingFileHandler(RotatingFileHandler):
+    """
+    RotatingFileHandler that flushes after every log message.
+    Critical for devices that may lose power suddenly (like car accessories).
+    """
+    def emit(self, record):
+        super().emit(record)
+        self.flush()
+
+
+# Configure logging
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+# Console handler - DEBUG level
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+console_formatter = logging.Formatter('%(asctime)s %(name)s %(message)s',
+                                     datefmt='%Y-%m-%d %H:%M:%S')
+console_handler.setFormatter(console_formatter)
+
+# File handler - INFO level, 1MB max, 10 backup files
+# Uses FlushingRotatingFileHandler to ensure logs are written immediately
+# This is critical since the device may lose power suddenly
+file_handler = FlushingRotatingFileHandler('logs/rpi-ble.log',
+                                           maxBytes=1024*1024,  # 1MB
+                                           backupCount=10)
+file_handler.setLevel(logging.INFO)
+file_formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s',
+                                  datefmt='%Y-%m-%d %H:%M:%S')
+file_handler.setFormatter(file_formatter)
+
+# Add handlers
+logger.addHandler(console_handler)
+logger.addHandler(file_handler)
+
 logger = logging.getLogger(__name__)
-logging.basicConfig(format='%(asctime)s %(name)s %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S',
-                    level=logging.DEBUG)
 
 mainloop = None
 
